@@ -1,0 +1,44 @@
+homework
+1. cat > ~/academy-linux-fundamentals.txt
+
+2. cp ~/academy-linux-fundamentals.txt /tmp
+
+3. mv /tmp/academy-linux-fundamentals.txt /tmp/academy-vincent.txt
+
+4. mkdir ~/package_management && rpm -q git > ~/package_management/git-rpm.txt :: git-2.43.5-1.el9.x86_64
+
+5. yum repolist enabled > ~/package_management/repo.txt
+
+6. echo set number > ~/.exrc
+
+7. mkdir ~/networking && cp /etc/hosts > ~/networking/hostbase-dns.txt
+
+8. grep search /etc/resolv.conf | awk '{for(i=1;i<=NF;i++) if($i!="search") print $i}' > ~/networking/search-domain.txt
+   grep search /etc/resolv.conf | cut -d ' ' -f 2- | tr ' ' '\n' > ~/networking/search-domain.txt
+
+9. sudo groupadd academy -g 1110 (check using sudo grep academy /etc/group); sudo useradd c_berzatto -u 1111 -g 1110 -s /bin/bash (check using sudo grep c_berzatto /etc/passwd)
+
+10. awk -F: '/^c_berzatto:/ {print $3; print $4}' /etc/passwd > ~/permissions/the-bear.txt
+	grep c_berzatto /etc/passwd | cut -d: -f3,4 | tr ':' '\n' > ~/permissions/the-bear.txt
+
+11. sudo chown -R :academy ~/permissions
+
+12. echo "Hello World" > ~/myscript.sh OR cat > ~/myscript.sh
+
+13. sudo chmod u+x ~/myscript.sh OR sudo chmod 744 ~/myscript.sh 	(OR +x for execute access to all)
+
+14. mkdir ~/service-management && systemctl list-units --type=service --state=active > ~/service-management/active.txt (34 loaded units listed)
+
+15. sudo yum install cronie
+	sudo systemctl start crond.service
+	sudo systemctl enable crond.service
+	* * * * * sudo cp -ra ~/{.,}* /tmp/backup
+
+
+
+
+I have an issue with this one, the command that i used didn't work in the playground but worked well in my local env. my other laptop is on dual boot, ubuntu and windows
+
+Actually sir I don't have an answer to this one. This is the only one I don't have an answer with. The command that i used worked on my local ubuntu environment but not in the playground. I kind of skipped it and proceeded to the other tasks and I kind of forgot about it.
+
+g-x, o-x

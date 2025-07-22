@@ -1,0 +1,200 @@
+Node	- virtual or physical machine where kubernetes/programs is installed
+Cluster	- set of nodes grouped together
+master 	- a node that handles worker nodes
+		- responsible for managing the cluser
+-- Installing kubernetes also installs these components:
+kube-apiserver
+		- primary management component in kubernetes
+		- acts as frontend for kubernetes
+etcd 	- distributed reliable key-value store, stores all data about managing the cluster
+kubelet	- agent that runs on each node on the cluster, responsible for making sure that the containers are running on the nodes as expected 	// in worker node only
+kube-proxy
+		- helps in enabling communication between services within the cluster. 	// in worker node only
+Container Runtime
+		- underlying software used to run containers (ex: Docker)
+Controller
+		- brain behind orchestration, responsible for responding when nodes goes down, make decisions to bring up new containers in such cases
+		- process that continuously monitors the state of various components within the system and works towards bringing the whole system to the desired functioning state
+Scheduler
+		- responsible for distributing work or containers across multiple nodes
+		- responsible for deciding which pod goes on which node
+Master vs Worker nodes
+		- Master has kube-apiserver
+		- Workers have kubelet which is responsible for interacting with the master, to provide information and carry out actions requested by the master
+node controller
+		- responsible for monitoring the status of the nodes and take necessary actions to keep the application running
+		- checks status of nodes every 5 seconds
+		- if node is unreachable, will give 40 seconds grace period before marking as "unreachable"
+		- if node is unreachable status, will be given 5 minutes to come back up before pod eviction
+replication controller
+		- responsible for monitoring the status of replicasets, ensuring that the desired number of pods are available at all times within the set.
+		- if a pod dies, it creates another one
+kubeadm - does not deploy pods
+		- does not deploy kubelet
+kubectl	- used to deploy and manage applications on a kubernetes cluster
+		- kubectl run hello-minikube
+		- kubectl cluster-info
+		- kubectl get nodes
+		- kubectl run nginx --image=nginx
+		- kubectl get pods
+		- kubectl describe pod nginx
+		- kubectl get pods -o wide
+		- kubectl create deployment nginx --image=nginx // creates deployment instead of a pod
+		- kubectl create -f pod-definition.yml
+		- kubectl get replicationcontroller
+		- kubectl rollout status deployment/myapp-deployment
+		- kubectl rollout history deployment/myapp-deployment	// see revisions
+		- minikube service myapp-service --url 	// get the link to access in browser if using minikube
+		- kubectl create -f . 	// execute all yaml configs in the dir
+		- kubectl get pods,svc
+		- kubectl get node -o wide 	// get the ip address of the node, use it to access externally
+		- kubectl get pods -n kube-system 	// auto-configured if using kubeadm
+		- kubectl get daemonset -n kube-system
+		- kubectl exec etcd-master -n kube-system -- etcdctl get / --prefix --keys-only 	// examine the keys stored in etcd
+
+		------>
+			apiVersion: v1
+			kind: Pod
+			metadata:
+			  name: myapp-pod
+			  labels:
+			    app: myapp
+			    type: front-end
+			spec:
+			  containers:
+			  - name: nginx-container
+			    image: nginx
+		<------
+		- kubectl delete pod webapp
+What is the flavor and version of Operating System on which the Kubernetes nodes are running?
+		- kubectl get nodes -o wide
+pod 	- single instance of an application
+		- the smallest object that you can create in k8s
+		- contains 1 or more containers
+		- have 1-1 relationship with its container/s
+		- do not add additional containers to an existing pod to scale an application | create another pod in same node or another node instead
+service types
+	NodePort
+		- Exposes a service on a static port on each node’s IP.
+	ClusterIP
+		- Creates a virtual IP for internal cluster communication.
+	LoadBalancer
+		- Provisions a load balancer (in supported cloud environments) for distribution.
+etcd 	- listens on port 2379 by default
+
+
+
+
+
+-- STEPS --
+
+# Create/generate yaml file using kubectl run
+kubectl run redis --image=redis123 --dry-run=client -o yaml > redis-definition.yaml
+kubectl run nginx --image=nginx
+kubectl create -f redis-definition.yaml 
+kubectl get pods
+
+# Edit pod and instantly get changes
+kubectl edit pod redis
+
+# Edit a deployment for upgrade
+edit the yaml file
+kubectl apply -f deployment-definition.yml
+
+kubectl set image deployment/myapp-deployment nginx-container=nginx:1.9.1 	// another way to edit deployment for upgrade, not recommended
+
+# Scale
+kubectl scale replicaset new-replica-set --replicas=5
+
+# Undo or rollout upgrade
+kubectl rollout undo deployment/myapp-deployment
+
+# Add change cause to the rollout history
+kubectl crate -f deployment-definition.yml --record
+
+# Set/Edit/Change image of current deployment | any will do
+kubectl set image deployment/frontend simple-webapp=kodekloud/webapp-color:v2
+kubectl edit deployment frontend
+vi deployment-frontend.yml && kubectl apply -f deployment-frontend.yml
+
+# Download etcd
+curl -L https://github.com/etcd-io/etcd/releases/download/v3.3.11/etcd-v3.3.11-linux-amd64.tar.gz -o etcd-v3.3.11-linux-amd64.tar.gz
+tar -xzvf file
+./etcd
+
+-- etcd commands --
+./etcdctl set key1 value1 	// v2 version, put in v3
+./etcdctl get key1
+ETCDCTL_API=3 ./etcdctl version 	// switch to use etcd API v3
+./etcdctl put key1 value1	// v3 version, set in v2
+
+# View api-server options -- kubeadm
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+cat /etc/systemd/system/kube-apiserver.service 		// non kubeadm setup
+ps -aux | grep kube-apiserver
+
+# View kube-controller-manager options -- kubeadm
+cat /etc/kubernetes/manifests/kube-controller-manager.yaml
+cat /etc/systemd/system/kube-controller-manager.service 	// non kubeadm setup
+ps -aux | grep kube-controller-manager
+
+# View kube-scheduler options -- kubeadm
+cat /etc/kubernetes/manifests/kube-scheduler.yaml
+cat /etc/systemd/system/kube-scheduler.service 	// non kubeadm setup
+ps -aux | grep kube-scheduler
+
+-- NAMESPACES --
+# Connect to db-service from another namespace
+mysql.connect("db-service.dev.svc.cluster.local") 	// dev is the name of the namespace
+
+# 2 ways to create namespace
+create yaml file and add "namespace: " under metadata
+kubectl create namespace dev
+
+# Set default namespace
+kubectl config set-context $(kubectl config current-context) --namespace=dev
+
+# Get pods from all namespaces
+kubectl get pods --all-namespaces
+
+# See pods of another namespace
+kubectl get pods --namespace=kube-system 	// or use -n kube-system
+
+-- IMPERATIVE vs DECLARATIVE --
+Best practice is to use kubectl apply command after creating yaml config file/s
+
+-- Imperative create --
+kubectl run --image=nginx nginx
+kubectl create deployment --image=nginx nginx / kubectl create deployment webapp --image=kodekloud/webapp-color --replicas=3
+kubectl expose deployment nginx --port 80 	/ kubectl expose --name=redis-service pod redis --port=6379 		// used for craeting service with exposure of port
+
+-- Imperative edit --
+kubectl edit deployment nginx
+kubectl scale deployment nginx --replicas=5
+kubectl set image deployment nginx nginx=nginx:1.18
+
+-- Imperative crud --
+kubectl create -f nginx.yaml
+kubectl replace -f nginx.yaml
+kubectl delete -f nginx.yaml
+
+
+OCI		- Open Container Initiative
+CRI		- Container Runtime Interface -- consists of
+		# imagespec - the image specification (for building images) 
+		# runtimespec - the runtime specification (for container execution)
+ctr 	- solely made to debug containerd
+ETCD
+		- distributed reliable key-value store
+		- listens to 2379 by default
+		- ./etcdctl put key1 value
+		- ./etcdctl get key1
+		- ./ectdctl
+
+
+Q: Create a pod named httpd using the image httpd:alpine in the default namespace.
+Then, create a service of type ClusterIP with the same name (httpd) that exposes the pod on port 80.
+A: kubectl run httpd --image=httpd:alpine --port=80 --expose
+-- long version --
+   kubectl run httpd --image=httpd:alpine
+   kubectl expose --name=httpd pod httpd --port=80

@@ -1,0 +1,13 @@
+#1
+file /opt/assets/* | grep 'ASCII text' | cut -d: -f1 > /home/bob/magicfile.txt
+
+#2
+ln -s /opt/assets/asset150 /home/bob/magiclink
+
+#7
+mdadm --create /dev/md0 --level=0 --raid-devices=3 /dev/vdb /dev/vdc /dev/vdd
+next is ez..
+
+#
+/dev/stratis/web_storage/web_storage1 /mnt/web_storage xfs x-systemd.requires=stratisd.service 0 0
+

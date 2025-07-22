@@ -1,0 +1,66 @@
+Mock 1
+
+#1
+star -c file=/home/bob/backup.star.gz /home/bob/files
+star -t file=/home/bob/files
+
+#2
+grep passed ~/examresults > ~/passed.txt
+grep failed ~/examresults > ~/failed.txt
+
+#
+sudo tuned-adm active | cut -d: -f2 | tr -d [:blank:] > ~/active.txt
+
+#
+systemctl get-default > ~/default.txt
+
+#8
+ps lax | grep sshd
+pidof sshd
+sudo renice -n 10 25761
+
+#9
+fallocate --length 1G /swap_file
+sudo mkswap /swap_file
+sudo swapon /swap_file
+vi /etc/fstab
+swapon --show
+
+#10
+pvcreate /dev/vdb
+vgcreate volume1 /dev/vdb
+lvcreate -n storage -l 100%FREE volume1
+
+#
+sudo stratis pool create my-pool /dev/vdc
+sudo stratis pool create my-pool /dev/vdc /dev/vdd
+sudo stratis pool list
+sudo stratis fs create my-pool myfs1
+sudo stratis fs
+sudo mkdir /mnt/mystratis
+/dev/stratis/kodekloud/kodekloud_files /kodekloud xfs x-systemd.requires=stratisd.service 0 0
+mount /dev/stratis/kodekloud/kodekloud_files /kodekloud ## or mount -a
+
+
+#17
+firewall-cmd --add-service=http --zone=public --permanent
+firewall-cmd --reload
+
+
+#18
+ip r | grep "^default" > ~/routes.txt
+
+#20
+usermod -aG wheel kodekloud
+
+#22
+What is the SELinux context label for the sshd process?
+ps -ZC sshd | cut -d " " -f1 > ~/context.txt
+
+#23
+Determine the current SELinux mode on the system
+getenforce > ~/mode.txt
+
+#25
+echo KodeKloud > /home/bob/kodekloud/kodekloud.html
+podman run -d --name my_web -p 1026:80 -v ~/kodekloud:/usr/share/nginx/html:Z docker.io/library/nginx

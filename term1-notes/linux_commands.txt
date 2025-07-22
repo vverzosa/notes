@@ -1,0 +1,261 @@
+Linux commands:
+	System Calls - System calls provide a secure interface for user programs to request services from the kernel, ensuring the stability and security of the system.
+
+	lspci: -  lists all PCI devices configured in your system, such as Ethernet cards, RAID controllers, video cards, and wireless adapters.
+	PCI stands for Peripheral Component Interconnect - representing devices directly attached to the motherboard
+
+	free: shows memory usage statistics, including total, used, and free memory
+
+
+
+	command types:
+		internal -- cd, export, mkdir, pwd
+		external -- mv
+		use type command to check if command is internal or external
+	vi: point cursor to the line that needs to be copied then press "yy"
+		point the cursor above the line where it would be pasted then press "p"
+		ZZ to save
+		dd to delete | also works as CUT
+		d3d delete + state how many lines
+		:2 is to go to line number 2
+		/text\c case insensitive
+
+	zcat (read w/o unarchiving): zcat [option] [path/file]
+
+	>: redirection symbol (to file)
+
+	2>: STDERR redirection symbol
+
+	>>: append to an existing file
+
+	2>>: append error to an existing file
+
+	|: called pipe, output of 1st command will be a parameter to the 2nd command (1st | 2nd)
+
+	gzip: used for compression (gzip [file/folder/path])
+
+	tar: used for archiving (tar -cf test.tar file1 file2) c create, f file name -- -tf to see contents, -xf to extract tar, -zcf to archive with compression
+	gunzip: used to decompress gzip (gunzip test.img.gz)
+
+	du: inspect the size of a file (du -sk test.img -- shows size in kb) -sh best practice
+
+	~: tilde symbol represents /home
+
+	/: forward slash means /root
+
+	pwd: print working directory
+
+	export: can be used to add ENV vars or append values to existing ENV, adding new program directory to $PATH: export PATH=$PATH:/opt/OBS/bin
+
+	mkdir -p: makes directories with parent /home/parent/child parent and child will be created
+
+	cd: w/o argument will redirect to /home, .. will redirect one step outside current pwd
+
+	mv: mv /source /destination, can also be used to rename directory
+
+	cp: to copy files, cp /source /destination
+
+	touch: create an empty file
+
+	less: less test.txt
+		Up Arrow: scrolls up one line.
+		Down Arrow: scrolls down one line.
+		/: begins a text search.
+		q: quits the viewer.
+
+	ls: -lt sort by modification date, -ltr reverse
+
+	chsh: change shell, options are /bin/sh, and others
+
+	modifying bash:
+		PS1="[ \d \t \u@\h:\w ] $ "
+		bash will look like [Thu Mar 12 22:12:54 bob@caleston:~ ] $
+
+	uname: retrieve kernel information, uname -r results to 4.15.0-72-generic where 4 is the kernel version, 15 is the major, 0 minor, 72 patch version
+
+	lshw: list hardware command
+
+	linux boot sequence:
+		BIOS POST (Power On Self Test)
+		Boot Loader (GRUB2) (located in /boot)
+		Kernel Initialization
+		INIT process (systemd located in /sbin/init)
+
+	runlevel: systemctl set-default multi-user.target, will boot w/o GUI, runlevel code is 3, with GUI is 5
+	/etc/systemd/system/default.target location of default target
+	/lib/systemd/system/ location of unit file (graphical.target)
+
+	file types:
+		regular files
+		directory
+		special files:
+			character files - found in /dev examples are mouse keyboard
+			block files /dev examples are disks
+			links:
+				hard link -deleting will also delete...
+				symbolic link (symlink) - kind of a shortcut to a file
+			sockets
+			named pipes
+
+	df -hP: view details about mounted filesystem, USB etc
+
+	find: search for files or directories (find /home/michael -name City.txt)
+
+	grep: searches for texts within files
+		grep second sample.txt - search for the word "second" in the file
+		grep -i capital sample.txt - case-insensitive search, default is case-sensitive
+		grep -R "third line" /home/michael - search recursively through a directory, -r doesn't follow symlink
+		grep -v exam examples.txt - print only the lines that do not match a particular pattern
+		grep -w exam examples.txt - print only the whole word
+		grep -vw exam examples.txt - print lines that do not contain the whole word "exam"
+		grep -A1 Arsenal premier-league-table.txt - print the line containing "Arsenal" along with the line immediately following it
+		grep -B1 4 premier-league-table.txt - print the line containing "4" and the preceding line
+		grep -A1 -B1 Chelsea premier-league-table.txt -print lines before and after
+
+
+	ln -s /test/a /test/dir/b: create a symbiolic link, kind of like a Windows shortcut
+
+	tee:
+		echo $SHELL | tee shell.txt: writes output to a file as well as print the output in the screen
+		echo $SHELL | tee -a shell.txt: append
+
+	cat >> /etc/hosts: append host ip and alias, can now use ping [alias (instead of ip)], to exit cat, move cursor to blank line then Ctrl + D
+	cat /etc/resolv.conf: add or update DNS nameserver, search, more
+	cat /etc/nsswitch.conf: change host precedence, default is files first then dns
+
+	ip addr add 192.168.1.10/24 dev eth0
+		- assign an ip address on a device, can be accessed only in the same network, make sure eth0 is UP
+
+	sudo ip link set dev eth0 up: set interface to UP if DOWN
+	sudo ip r add default via 172.16.238.1: add default route
+	/etc/network/interfaces: update config files here if you want the changes to pe persistent
+
+	sudo grep bob /etc/sudoers: check sudo access level of user
+
+	echo $HOME: show users home directory/path
+	
+
+
+
+
+
+
+
+
+
+bob@devapp01:~$ sudo iptables -A OUTPUT -p tcp --dport 80 -j DROP                                     
+bob@devapp01:~$ sudo iptables -A OUTPUT -p tcp --dport 443 -j DROP
+
+add env
+echo 'export MY_VARIABLE="example_value"' >> ~/.profile
+
+add alias
+echo 'alias ll="ls -l"' >> ~/.profile
+
+customizing bash prompt
+echo 'PS1="[\d]\u@\h:\w$"' >> ~/.profile
+
+get current ssh client
+echo $SSH_CLIENT
+
+lsblk  -- list all block devices //disk
+
+sudo ls -l /sbin/init
+show init process used by the system
+
+systemctl get-default
+get default target
+
+sudo file /root/firefox.deb
+check file info
+
+lshw
+extracts comprehensive details about the system's hardware configuration. This includes memory setup, 
+firmware version, motherboard information, CPU, cache settings, and bus speeds
+
+sudo gdisk /dev/vdb
+create disk partition
+
+mkfs.ext4 /dev/sdb1
+create file system
+
+mkdir /mnt/ext4
+mount /dev/sdb1 /mnt/ext4
+mount disk -- mount | grep /dev/sdb1 to check
+
+sudo df -H
+show information about the file system
+
+sudo blkid /dev/vdc
+check the type of filesystem
+
+sudo vi /etc/fstab
+/dev/vdb /mnt/data ext4 rw 0 0
+Make the mount persistent across reboot.
+
+sudo mkdir /mnt/media
+sudo mkfs.ext4 /dev/mapper/caleston_vg-data
+sudo mount /dev/mapper/caleston_vg-data /mnt/media
+create an ext4 filesystem and mount
+
+sudo lvresize -L +500M -n /dev/mapper/caleston_vg-data
+sudo resize2fs  /dev/mapper/caleston_vg-data //updates the physical volume
+add 500m to the logical volume called data
+
+sudo find /var -type d -name pets
+	find directories with name pets
+
+sudo find /var -type f -perm 0777 -print
+	find files in /var whose perms are 0777
+
+sed -i 's/disabled/enabled/gi' ~/values.conf
+	substitutes not case sensitive "disabled" word with enabled
+
+sed -i 's~#%$2jh//238720//31223~$2//23872031223~g' /home/bob/data.txt
+	use another delimiter if text contains a lot of '/'
+
+top
+	: equivalent to task manager in windows
+
+ps
+	: list processes
+	: ps 1 //lists process id 1
+	: ps u 1 //lists user oriented format
+	: ps -U vincent //lists process by the user
+	: ps u -U vincent //lists user oriented process by the user
+	: ps l //show nice values
+	: ps fax //forest view, parent process, child process, or ps faux
+
+pgrep
+	: grep for processes
+	: pgrep -a syslog //sample
+
+nice
+	: can be used to assign priority to a process
+	: niceness of a process to other processes
+	: values -20 to +19, only root can assign negative number
+	: nice -n 11 bash
+	processes inherit the niceness value of the process that run them
+	: sudo renice 7 8019 //reassign niceness/priority to a process using their PID
+	: can lower niceness one time per session only if regular user, can raise as many times as we want
+
+
+exit
+	: type exit to exit a previous bash shell, good to know
+
+kill
+	: send signal to a process
+	: default signal is 15. sigterm
+	: pkill -KILL bash
+
+Ctrl + Z when editing vi
+	: brings the vi process to the background
+	: type "fg" meaning foreground to get back to the background process
+
+ampersand(&) in the end of command will run the command in the background, example use would be backing database which takes too much time
+
+jobs
+	: used to check if we have any programs running in the background
+	: use "fg 1" with job number to bring the program forward, or in foreground
+
+ 

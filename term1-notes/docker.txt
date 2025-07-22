@@ -1,0 +1,119 @@
+docker run --link --> docker run --name=vote -p 5000:80 --link redis:redis voting-app
+docker attach
+docker inspect
+docker run --entrypoint
+docker run -d --name clickcounter --link redis:redis -p 8085:5000 kodekloud/click-counter
+docker -H=remote-docker-engine:port run nginx
+
+docker run --cpus=.5 ubuntu // ensures that the container doesn't take up more than 50% of the host's cpu
+docker run --memory=100m // same concept above
+docker volume create data_volume // will be created under /var/lib/docker/volumes/data_volume in docker host
+docker run -v data_volume:/var/lib/mysql mysql // docker can also auto create volume though this without going through volume create
+docker run -v /data/mysql:/var/lib/mysql mysql // mount volume that is not in docker host, user created
+volume mounting - mounts from the docker volumes directory
+bind mounting - mounts from external directory
+-v is old version, modern way is to use --mount
+docker run \
+--mount type=bind,source=/data/mysql,target=/var/lib/mysql mysql
+
+docker run -d --name mysql-db -e MYSQL_ROOT_PASSWORD=db_pass123 mysql
+docker exec mysql-db mysql -pdb_pass123 -e 'use foo; select * from myTable' // get data from mysql db
+docker run ubuntu --network=none // 3 types of network, bridge none host, bridge is default
+
+docker network create --driver bridge --subnet 182.18.0.0/24 --gateway 182.18.0.1 wp-mysq
+l-network
+
+docker -H=10.12.13.14:2375 run nginx
+ps -eaf | grep pattern // get processes
+docker build Dockerfile -t vincent/myapp
+docker build -f Dockerfile2 -t vincent/myapp
+
+storage drivers: //docker will choose automatically based on OS
+	aufs - default of ubuntu
+	device mapper - rhel/centos
+
+docker info | more
+docker history name_of_image // shows history, steps in building, etc
+du -sh *	// inside /var/lib/docker/aufs/diff directory to check sizes of files --> du -sh . will output total of all
+docker system df -v	// shows total size of images, containers and volumes in docker
+
+-- DOCKER SWARM --
+docker swarm init
+docker node ls
+docker swarm leave
+docker node rm
+docker swarm join-token manager		// run this in docker master node, then copy token to the manager node
+docker swarm join-token worker
+docker node promote docker-node2	// run from master node
+hostname docker-master3 			// change hostname command
+docker swarm init --force-new-cluster --advertise-addr 192.168.54.43
+
+-- DOCKER SERVICE --
+docker service create --replicas=3 my-web-server
+docker service create --mode global my-monitoring-service	// one instance only but present in all nodes
+
+docker service create --replicas=3 --name web-server my-web-server
+docker service update --replicas=4 web-server
+
+docker service create nginx
+docker service ls
+docker service ps hopeful_jones
+docker service update hopeful_jones --publish-add 5000:80
+docker service rm 0v 	// no need to stop first
+docker node update --availability drain docker-master	// shuts down all instances in the docker master node -- runs instances on worker nodes instead
+
+-- ADVANCED NETWORKING --
+docker network create --drive overlay --subnet 10.0.0.9/24 my-overlay-network
+docker service create --replicas=2 --name web-server --network my-overlay-network my-web-server
+
+docker stack deploy		// deploys a docker swarm file --> docker swarm version of docker compose up --> docker-swarm.yaml file contains same config
+docker stack deploy voting-app-stack --compose-file docker-swarm.yaml 	// creates and updates stack
+service 	// one or more instances of a container running on one or multiple nodes
+container < service < stack
+
+-- STACK PLACEMENT --
+version: 3
+services:
+  db:
+    image: postgres:9.4
+    deploy:
+      placement:
+        constraints:
+          - node.hostname == node1
+          - node.role == manager
+
+
+-- LIMIT RESOURCE --
+version: 3
+services:
+  redis:
+    image: redis
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 50M
+
+-- SAMPLE SWARM YAML --
+version: '3'
+services:
+  redis:
+    image: redis
+  db:
+    image: postgres:9.4
+  vote:
+    image: dockersamples/examplevotingapp_vote
+    ports:
+      - 5000:80
+  worker:
+    image: dockersamples/examplevotingapp_worker
+  result:
+    image: dockersamples/examplevotingapp_result
+    ports:
+      - 5001:80
+
+-- DOCKER REGISTRY --
+docker run -d -p 5000:5000 registry:2 	// create local registry
+docker push localhost:5000/cybergencent/my-custom-image 	// push to local registry
+

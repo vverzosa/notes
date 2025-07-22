@@ -1,0 +1,71 @@
+cd /opt/maven/my-app/; sudo mvn package // build and package using maven
+cd /opt/ant; ant compile jar
+cd /opt/ant; ant
+
+What is output for main app when you run /opt/maven/my-app/target/my-app-1.0-SNAPSHOT.jar created with maven package?
+--> java -cp /opt/maven/my-app/target/my-app-1.0-SNAPSHOT.jar com.mycompany.app.App
+
+jar cf MyApp.jar MyApp.class Service1.class Service2.class Tools.class ...
+java -jar MyApp.jar
+javadoc -d doc MyClass.java
+java build process
+--> develop, compile, package, document
+
+NODEJS
+node -e "console.log(module.paths)"
+npm install file -g // -g for global
+
+PIP
+pip2 for python2, pip3 for python3
+pip install flask
+pip show flask
+pip install -r requirements.txt
+requirements.txt format
+-->
+	Flask==0.10.1
+	gunicorn=18.0
+<--
+pip install flask --upgrade
+pip uninstall flask
+
+location of installed pip package is --> /usr/lib/python3.9/site-packages
+
+python2 -c "import sys; print(sys.path)"
+
+GIT
+git remote -v
+
+APACHE
+inside main conf
+-->	Include /conf/houses.conf
+
+/etc/httpd/conf/houses.conf
+-->
+<VirtualHost *:80>
+	ServerName www.houses.com
+	DocumentRoot /var/www/houses
+</VirtualHost>
+
+TOMCAT
+Run apache tomcat on all IP interfaces and port 9090 on host01 server.
+-->
+sudo sed -i 's/8080/9090/g' apache-tomcat-8.5.53/conf/server.xml
+sudo ./apache-tomcat-8.5.53/bin/startup.sh 
+Note: - Tomcat by default listen to all IP interfaces.
+<--
+
+OPENSSL
+Creating a certificate signing request
+cd into /etc/httpd/csr directory and run command sudo openssl req -new -newkey rsa:2048 -nodes -keyout app01.key -out app01.csr to generate a CSR file.
+
+To verify the entries we used to create a CSR, run the command:
+openssl req  -noout -text -in app01.csr
+
+Creating a self signed certificate
+cd into /etc/httpd/certs directory and run command 
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout app01.key -out app01.crt and then pass in the details given above.
+
+realpath --> get the full path of file
+
+verify
+echo | openssl s_client -showcerts -servername app01.com -connect app01:443 2>/dev/null | openssl x509 -inform pem

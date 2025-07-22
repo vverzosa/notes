@@ -1,0 +1,96 @@
+homework answers
+
+1. 	touch /tmp/Wafu
+	ln /tmp/Wafu /tmp/hard
+	ln -s /tmp/Wafu /tmp/soft
+
+2.	touch ~/AllMighty
+	chmod u+s,g+s,o+t ~/AllMighty
+
+3.	u-s,g-s,o-t
+
+4.	find /tmp -type f -perm /g+s
+
+5. 	sed -E '/nologin/ s/(games|operator)/pogo/g' /etc/passwd
+
+6. 	cut -d : -f 7 /etc/passwd | sort | uniq -c
+
+7.	egrep 'bob|ftp|systemd' /etc/passwd
+
+8.	find /etc -type d -name '*.d'
+
+9.	tar -zcf files_ending_with_0.tar.gz ~/file*0
+
+10.	tar -zcf 0ps.tar ~/file{9..21}
+
+11.	grep -r '^The' /etc/ 2> ~/error.log > ~/regular.log
+
+12.	dd if=/dev/zero of="$USER.log" bs=1M count=14
+
+13.	
+#!/bin/bash
+num=$1
+
+if (( num > 4 && num < 10 ))
+then
+	echo $num is greater than 4 and lesser than 10
+else
+	echo $num is not greater than 4 and not lesser than 10
+fi
+
+
+14.
+#!/bin/bash
+while true
+do
+	read -p "Enter number: " number
+
+	if (( number == 0 ))
+	then
+		echo "You entered ${number}. Exiting..."
+		exit 1
+	fi
+done
+
+15.	sudo systemctl status sshd //to check the status and PID
+	sudo kill PID_NUMBER //sigterm is the default
+
+16.	sudo cfdisk /dev/sdb & sudo cfdisk /devsdc
+	sudo pvcreate /dev/sdb1 /dev/sdc1
+	sudo vgcreate academy_vg /dev/sdb1 /dev/sdc1
+	sudo lvcreate -n academy_lv -l 100%FREE academy_vg
+	sudo lvdisplay /dev/academy_vg/academy_lv
+	sudo pvs
+
+17. sudo cfdisk /dev/sdb //choose type Linux SWAP
+	sudo mkswap /dev/sdb2
+	sudo swapon /dev/sdb2
+	sudo swapon --show
+	echo '/dev/sdb none swap defaults 0 0' | sudo tee -a /etc/fstab
+	lsblk
+
+18.	sudo cfdisk /dev/sdb //choose type Linux RAID
+	sudo cfdisk /dev/sdc
+	sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/sdb3 /dev/sdc2
+	sudo mdadm --detail /dev/md0
+	sudo mkfs.ext4 /dev/md0
+	sudo mkdir -p /mnt/raid
+	sudo mount /dev/md0 /mnt/raid
+	echo '/dev/md0 /mnt/raid ext4 defaults 0 2' | sudo tee -a /etc/fstab
+	sudo mdadm --detail --scan | sudo tee -a /etc/mdadm/mdadm.conf //mkdir mdadm if non existent
+	sudo dracut -fv --regenerate-all
+	df -h /mnt/raid //optional - check mount
+	sudo reboot //to test persistence
+	sudo mdadm --detail /dev/md0 && mount | grep /mnt/raid //verify after reboot
+	lsblk
+
+
+
+17. Create another partition in /dev/sdb, with 1G of size. Create a swap filesystem
+out of /dev/sdb2. Make sure that the swap filesystem is enabled and is also 
+automatically enabled during bootup.
+
+18.Create one (1) 1GB partitions in each of /dev/sdb and /dev/sdc, namely 
+/dev/sdb3 and /dev/sdc2. Create a level 1 RAID array named /dev/md0, with 
+two devices /dev/sdb3 and /dev/sdc2. Format the raid to ext4 and mount 
+to /mnt/raid. Ensure that your mount is persistent across reboots.

@@ -1,0 +1,352 @@
+steps
+
+-- SWAP --
+
+partition first using cfdisk, choose linux swap as type
+sudo mkswap /dev/sdb1
+sudo swapon /dev/sdb1
+swapon --show
+
+swapoff /dev/sdb1
+
+use file as swap instead of partition
+dd if=/dev/zero of=/swap bs=1M count=128 status=progress
+sudo chmod 600 /swap
+sudo mkswap /swap
+sudo swapon --verbose /swap
+swapon --show
+
+-- PARTITION --
+sudo cfdisk /dev/{disk}
+mkfs.ext4 /dev/{disk}
+mkdir /mnt/data
+mount /dev/{disk} /mnt/data
+lsblk -f
+sudo vi /etc/fstab
+
+-- LVM --
+
+sudo dnf install lvm2 -y
+sudo pvcreate /dev/sdb2
+sudo pvs
+sudo vgcreate vgsdb /dev/sdb2
+sudo lvcreate --size 100M --name lvsdb vgsdb
+sudo mkdir -p /mnt/lvm
+sudo mkfs.xfs /dev/mapper/vgsdb-lvsdb or sudo mkfs.xfs /dev/vgsdb/lvsdb
+sudo mount /dev/mapper/vgsdb-lvsdb /mnt/lvm
+sudo vi /etc/fstab
+
+-- LVM 2 --
+
+sudo cfdisk /dev/sdb & sudo cfdisk /devsdc
+sudo pvcreate /dev/sdb1 /dev/sdc1
+sudo pvs
+sudo vgcreate academy_vg /dev/sdb1 /dev/sdc1
+sudo lvcreate -n academy_lv -l 100%FREE academy_vg	
+sudo lvdisplay /dev/academy_vg/academy_lv
+
+#### if editing lv for extents sudo lvresize --extents 100%VG academy_vg/academy_lv  
+///// sudo lvresize --size 2G academy_vg/academy_lv -- undo extents
+#### sudo lvresize --resizefs --size 3G academy_vg/academy_lv -- resize lv with a filesystem
+
+
+-- ADD TO VG --
+sudo pvcreate /dev/sde 	-- /dev/sde1 for partition
+sudo vgextend academy_vg /dev/sde1
+-- to reduce vg --
+sudo vgreduce academy_vg /dev/sde1
+
+
+-- ENCRYPTION --
+sudo cryptsetup --verify-passphrase open --type plain /dev/vde mysecuredisk
+sudo mkfs.xfs /dev/mapper/mysecuredisk
+sudo mount /dev/mapper/mysecuredisk /mnt
+
+sudo umount /mnt
+sudo cryptsetup close mysecuredisk
+
+
+	-- LUKS --
+sudo cryptsetup luksFormat /dev/vde
+sudo cryptsetup open /dev/vde mysecuredisk
+sudo mkfs.xfs /dev/mapper/mysecuredisk
+sudo mount /dev/mapper/mysecuredisk /mnt
+sudo umount /mnt
+sudo cryptsetup close mysecuredisk
+
+if only partition then
+sudo cryptsetup luksFormat /dev/vde1
+...
+
+sudo cryptsetup luksChangeKey /dev/vde //to change passkey
+
+
+ -- REMOVE VG PV --
+vgremove --force academy_vg
+pvremove /dev/vdc /dev/vdd /dev/vde
+
+sudo mdadm --create /dev/md0 --level=0 --raid-devices=3 /dev/vdc /dev/vdd /dev/vde
+sudo mkfs.ext4 /dev/md0
+
+-- stop and clean up array --
+$ sudo mdadm --stop /dev/md0
+sudo mdadm --zero-superblock /dev/vdc /dev/vdd /dev/vde
+
+-- create raid 1 with spare --
+sudo mdadm --zero-superblock /dev/vdc /dev/vdd /dev/vde
+$ sudo mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdc /dev/vdd --spare-devices=1 /dev/vde
+
+-- add another disk to array --
+sudo mdadm  --manage /dev/md0 --add /dev/vde
+
+-- remove disk from array --
+sudo mdadm  --manage /dev/md0 --add /dev/vde
+
+cat /proc/mdstat
+
+
+-- ACL --
+sudo setfacl --modify user:aaron:rw examplefile //set facl to user aaron
+getfacl examplefile //view acl of file
+
+sudo setfacl --modify mask:r examplefile //set maximum perm to a file
+getfacl examplefile
+
+sudo setfacl --modify user:aaron:--- examplefile //deny access to user aaron
+
+sudo setfacl --remove user:aaron examplefile //remove access of user to a file
+sudo setfacl --remove group:wheel examplefile //remove access of group to a file
+
+sudo setfacl --recursive --modify user:aaron:rwx dir1/ //set access of user to files in the dir recursively
+sudo setfacl --recursive --remove user:aaron dir1/
+getfacl --access /srv/devshare
+
+sudo chattr +a file //set append only attribute
+lsattr
+sudo chattr +i file //immutable
+
+-- QOUTA --
+sudo dnf install qouta -y
+sudo vi /etc/fstab ## change defaults to "defaults,usrquota,grpquota"
+sudo mount -o remount /mnt //try this first to avoid reboot
+mount | grep quota //verify Output should include usrquota and/or grpquota
+sudo systemctl reboot //until this step, xfs system is good to go
+
+-- for ext4 quota --
+sudo vi /etc/fstab ## change defaults to "defaults,usrquota,grpquota"
+$ sudo quotacheck --create-files --user --group /dev/vdb2
+sudo mount -o remount /mnt //try this first to avoid reboot
+mount | grep quota //verify Output should include usrquota and/or grpquota
+
+Create a directory for a user named Aaron, change its ownership, and generate a 100-megabyte file using the fallocate command:
+
+$ sudo mkdir /mybackups/aaron/
+$ sudo chown aaron:aaron /mybackups/aaron
+$ fallocate --length 100M /mybackups/aaron/100Mfile
+
+
+$ sudo useradd --system sysacc
+$ sudo userdel -r john //also deletes home dir
+cat /etc/skel --> contents= .bashrc .bash_logout .bash_profile
+cat /etc/login.defs --> file where other defaults related to account creation is
+$ sudo usermod --home /home/otherdirectory --move-home john
+# or
+$ sudo usermod -d /home/otherdirectory -m john
+ change the username from "john" to "jane", use:
+$ sudo usermod --login jane john
+# or using the shorthand option:
+$ sudo usermod -l jane john
+$ sudo usermod --lock jane
+$ sudo usermod --unlock jane
+$ sudo usermod --expiredate "2025-12-10" jane
+$ sudo usermod --expiredate "" jane // cancel ACCOUNT expiredate
+$ sudo chage --lastday 0 jane // PASSWORD expiration date
+# or using the short option:
+$ sudo chage -d 0 jane
+$ sudo chage --maxdays 30 jane // PASSWORD will be prompted to change every 30  / set maxdays to -1 to cancel password change prompt
+$ sudo chage --list jane
+
+
+sudo gpasswd -a john developers // best way to add user to group
+sudo gpasswd -d john developers
+sudo usermod -g developers john // change primary group of user john to developers
+sudo groupmod --new-name programmers developers //new name first arg
+# Or equivalently:
+sudo groupmod -n programmers developers
+sudo groupdel programmers
+
+
+PAM
+#restrict root access to ssh but not from the ssh configuration
+auth    required       pam_listfile.so onerr=succeed  item=user  sense=deny  file=/etc/ssh/deniedusers
+echo 'root' | sudo tee -a /etc/ssh/deniedusers
+
+ssh-keygen -R 10.11.12.13 // Remove known host
+rm ~/.ssh/known_hosts // Remove all fingerprints
+
+#SELinux change context of file
+sudo chcon -t httpd_sys_content_t /var/index.html
+
+#change SELinux status to permissive
+sudo setenforce 0
+
+#see SELinux users
+sudo semanage user -l
+
+#SKOPEO
+Create a directory at /home/bob/fedora/. Use skopeo to sync the remote registry registry.fedoraproject.org/fedora:latest to the local directory at /home/bob/fedora
+
+sudo skopeo sync --src docker --dest dir registry.fedoraproject.org/fedor
+a:latest /home/bob/fedora
+
+
+STRATIS
+sudo yum install stratisd stratis-cli
+sudo systemctl enable --now stratisd.service
+sudo stratis pool create my-pool /dev/vdc
+sudo stratis pool create my-pool /dev/vdc /dev/vdd
+sudo stratis pool list
+sudo stratis fs create my-pool myfs1
+sudo stratis fs
+sudo mkdir /mnt/mystratis
+/dev/stratis/kodekloud/kodekloud_files /kodekloud xfs x-systemd.requires=stratisd.service 0 0
+mount /dev/stratis/kodekloud/kodekloud_files /kodekloud ## or mount -a
+
+sudo cp /home/aaron/mydata.txt /mnt/mystratis
+sudo stratis pool add-data my-pool /dev/vdd
+sudo stratis fs snapshot my-pool myfs1 myfs1-snapshot
+
+
+
+podman run -d --name my_web -p 1026:80 -v ~/kodekloud:/usr/share/nginx/html:Z docker.io/library/nginx
+
+VFAT
+
+sudo fdisk /dev/vde; choose t, type b for W95 FAT32
+sudo mkfs.vfat -F 32 /dev/vde1 // add -F 32 if required, or if disk is 2GB to 16GB
+sudo mkdir /myvfat
+sudo mount /dev/vde1 /myvfat
+sudo vi /etc/fstab --> /dev/vde /myvfat vfat defaults 0 0
+
+ANACRON
+touch /etc/cron.hourly/script //no .sh
+chmod +rx /etc/cron.hourly/script
+1 10 test_job /usr/bin/touch /root/anacron_test ## important to include full path of command
+1 10 test_job /usr/bin/touch /root/anacron_test | systemd-cat --identifier=test_job // logs job in journalctl or /var/log/messages
+sudo anacron -n // run anacron jobs
+anacron -n -f // force re-run of jobs
+sudo grep anacron /var/log/cron
+sudo grep test_job /var/log/cron
+anacron -T //test job syntax for errors
+
+AT SCHEDULE
+at 'August 20 2022'
+at '2:30 August 20 2022'
+at 'now + 30 minutes'
+at 'now + 3 hours'
+at 'now + 3 days'
+at 'now + 3 weeks'
+at 'now + 3 months'
+sudo grep atd /var/log/cron // atd=at daemon
+
+at> /usr/bin/touch file_created_by_at // press Ctrl D like cat to save
+at> /usr/bin/touch file_created_by_at | systemd-cat --identifier=at_created_file // log
+journalctl | grep at_created_file
+atq // see jobs
+at -c 20 //see contents of at job with id 20
+atrm 20 //remove job
+
+CRON
+cat /var/log/cron //logs of cron
+sudo grep [pattern] /var/log/cron
+/etc/crontab // shows details and definitions of asterisks
+/var/log/cron /var/log/syslog /var/log/messages ## cron log locations
+
+Manage the startup process and services
+systemctl cat sshd.service // view the contents of service file
+systemctl edit --full sshd.service // edit the service file
+systemctl revert sshd.service // undo changes in service file
+systemctl mask sshd.service // prevents any manual or auto starting by other services reliant to sshd
+systemctl list-units --type service --all
+
+Registering with Red Hat Subscription Management
+sudo subscription-manager register --username your-redhat-developer-username --password your-redhat-password
+sudo subscription-manager attach --auto
+yum repolist // check currently enabled repos
+yum repolist -v // shows baseurl of repo
+yum repolist --all // see optional repositories
+sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms // enable a repo
+sudo subscription-manager repos --disable codeready-builder-for-rhel-8-x86_64-rpms //disable
+
+sudo yum install yum-utils
+sudo yum-config-manager --enable codeready-builder-for-rhel-8-x86_64-rpms //enable a repo
+sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo // add an internet-based repository
+sudo yum-config-manager --add-repo 192.168.1.220/BaseOS.repo // add local repo
+sudo yum repolist -v //verify if repo is added
+/etc/yum/repos.d // location of repo configs
+rm /etc/yum/repos.d/docker-ce.repo // delete instead of disabling repo
+yum group list // group is useful for installing group of packages
+yum groul list --hidden
+--> Server with GUI
+yum group install 'Server with GUI'
+
+Installing Software from an RPM File
+sudo wget https://download.nomachine.com/download/7.7/Linux/nomachine_7.7.4_1_x86_64.rpm
+sudo yum install ./nomachine_7.7.4_1_x86_64.rpm
+sudo yum remove nomachine
+sudo yum autoremove // remove dependencies of package
+yum check-upgrade // check packages that can be upgraded
+
+YUM MODULES
+sudo yum module list
+yum module list nodejs
+sudo yum module list --installed nodejs
+sudo yum module reset nodejs
+
+Network Configuration Files in Red Hat-Based Systems
+
+ip link show
+ip a
+ip r
+cat /etc/sysconfig/network-scripts/ifcfg-enp0s3
+Notice that BOOTPROTO=dhcp signifies a dynamic configuration. For a static setup, change this value to none and manually assign the IP address, gateway, and DNS details.
+sudo nmtui
+sudo nmcli device reapply enp0s3
+-- another way to enable net connection on boot --
+nmcli connection show
+nmcli connection modify enp0s3 autoconnect yes
+
+Statically route IP traffic
+sudo ip r add 192.168.1.0/24 via 10.10.10.1
+sudo ip r add 192.168.1.0/24 via 10.10.10.1 dev enp0s3
+ip r del 192.168.1.0/24
+ip r add default via 10.10.10.2 // where 10...2 is the gateway
+
+IP R is static only, recommended way to add IP is NMCLI ..permanent also
+nmcli connection show
+sudo nmcli connection modify eth1 +ipv4.routes "192.168.0.0/24 172.28.128.100"
+sudo nmcli connection modify eth1 -ipv4.routes "192.168.0.0/24 172.28.128.100"
+sudo nmcli device reapply eth1
+ip route show // confirm route active
+
+ROOT
+if root is locked, we can only use
+sudo --login or sudo -i
+other ways to login: su -, su -l
+su - //will not work
+
+sudo passwd --lock root // to lock root
+
+2 ways to allow people to login to root with a password (if root is locked)
+#1 if root doesn't have a password, run sudo passwd root to set pass
+#2 sudo passwd --unlock root
+
+SSH CLIENT CONFIG FILE
+vi ~/.ssh/config
+-->
+	Host centos
+    HostName 10.11.12.9
+    Port 22
+    User aaron
+<--
+chmod 600 ~/.ssh/config // set authorized_keys to 600 also when created

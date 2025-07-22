@@ -1,0 +1,358 @@
+RHCSA Notes:
+
+4 types of accounts:
+	User account
+	Super user account // 0 uid
+	System account // under 100 or 500-1000 uid
+	Service account //eg. nginx
+
+sudo mandb
+	: create database to use apropos
+
+apropos -s 1,8 directo
+	: commands in man page is usually in 1 and 8 only
+	
+apropos -s 5
+	: configuration files
+
+What section of the manual pages deals with System administration commands?
+	: section 8
+
+We are trying to run apropos ssh command to get some details about the commands related to ssh but we are getting this error
+	: sudo mandb
+
+stat [filename]
+	: command that show stats of file
+
+ln source destination (-s for soft link/symbolic link)
+	: create hardlink of a file ONLY, also only from the same filesystem
+	: can create softlink of directories and files from other filesystems
+
+readlink
+	: to see path stored in a soft link
+
+ls --full-time
+	: list the full time craeted modified etc
+
+find . -perm /4000
+	: find files based on permission
+
+find -perm 664 -- finds files with exactly 664 perms
+			   -- -664 finds files with AT LEAST 664 perms
+			   -- /664 finds files with ANY of these perms
+find /usr/share/ -name '*.jpg'
+	: find all files with .jpg extension
+
+find /lib64/ -size +10M
+	: find all files with size larger than 10mb
+
+find /path/to/directory -mmin -1
+	: find which files have been modified within the last minute
+
+find -mmin 5
+	: list files modified exactly 5 minutes ago
+
+find --min -5
+	: list files modified within the last 5 minutes
+
+find -mtime 2
+	: list files modified within the last 48-72 hours, interval of 24hrs
+
+find \( -name "f*" -o -size 512k \)
+	: find name with or with size
+	: without -o is AND version
+
+ctime vs mtime in find 
+	: ctime is the change in metadata eg., date modified, mtime is changes in file contents
+
+cat | tac(view in reverse order)
+
+tail -n 20 /path/to/file.txt (prints last 20 lines)
+	: default is last 10 lines
+	: tail -F /var/log/secure //live view of a log file -F follow
+
+head -n 20 /path/to/file.txt
+	prints first lines, default still 10
+
+sed 's/change_from/change_to/g' /path/to/file.txt
+	: stands for stream editor
+	: if ran WITHOUT '-i', it will only print changes, not apply it to file
+
+sort sample.txt | uniq
+	: prints only unique words, if uniq only is used, will only remove same words nga nagsunod, that's why need sort first
+
+cat /etc/os-release
+	: get info of os release
+
+REGULAR EXPRESSION (stuck at ':', grep won't include chars after the symbol)
+	^ : the line begins with
+	$ : the line ends with
+	. : match ANY ONE character
+	* : match the previous element 0 or more times (eg., let* will match both legal and letter)
+	+ : match the previous element 1 or more times
+	{}: previous element can exist THIS MANY times
+		0{3,} matches 3 zeros at least
+		10{,3} is 1 followed by at most 3 zeros
+		0{3} matches exactly 3 zeros
+		0{1,4} at least once, at most 4, kinda like 0{min,max}
+	? : previous element can exist once or not at all | makes the previous element optional
+	| : match one thing or the other
+	[]: range or sets like [a-z] [0-9] [A-Z] [a-Z]
+		egrep -r 'c[au]t' /file will match cut,cat
+	(): subexpression, kinda like a wrapper
+	[^] : negated range or sets
+		egrep -r 'http[^s]' /file will match any http, httpd,httpa except https
+	
+BASH Syntax	Purpose
+"${values[@]}"	All values in the array
+"${!values[@]}"	All indexes of the array
+"${#values[@]}"	Number of elements in the array
+
+Interrupt the boot process in order to gain access to a system module
+	: press down arrow to interrupt grub boot process, this will show the available kernels, for rhel 8
+   @: mount | grep /sysroot
+   	: mount -o remount rw /sysroot
+   	: cd /sysroot
+   	: chroot /sysroot
+   	: passwd root
+   	: touch /.autorelabel
+   	: exit; reboot
+
+   	: for rhel 9, go to 2nd line change r\o to r\w and then add init=/bin/bash after quiet in 3rd line
+   	: passwd 
+   	: touch /.autorelabel
+   	: exec /sbin/init
+
+Install, configure and troubleshoot bootloaders
+	: Troubleshoot
+	: 1
+	: chroot /mnt/sysroot
+	: grub2-mkconfig -o /boot/grub2/grub.cfg // for BIOS based
+	: grub2-mkconfig -o /boot/efi/EFI/centos/grub.cfg // for EFI based
+	: lsblk // check where to install grub /boot
+	: grub2-install /dev/sda -- for EFI -- dnf reinstall grub2-efi grub2-efi-modules shim
+	: exit
+	: exit
+	: sudo vim /etc/default/grub
+	: sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+	: sudo systemctl reboot
+
+	: /etc/default/grub file is read by mkconfig, not grub itself
+	: grub will look for grub.cfg in /boot
+
+
+
+
+
+top
+	: equivalent to task manager in windows
+
+ps
+	: list processes
+	: ps 1 //lists process id 1
+	: ps u 1 //lists user oriented format
+	: ps -U vincent //lists process by the user
+	: ps u -U vincent //lists user oriented process by the user
+	: ps l //show nice values
+	: ps fax //forest view, parent process, child process, or ps faux
+
+pgrep
+	: grep for processes
+	: pgrep -a syslog //sample
+
+nice
+	: can be used to assign priority to a process
+	: niceness of a process to other processes
+	: values -20 to +19, only root can assign negative number
+	: nice -n 11 bash
+	processes inherit the niceness value of the process that run them
+	: sudo renice 7 8019 //reassign niceness/priority to a process using their PID
+	: can lower niceness one time per session only if regular user, can raise as many times as we want
+
+
+exit
+	: type exit to exit a previous bash shell, good to know
+
+kill
+	: send signal to a process
+	: default signal is 15. sigterm
+	: pkill -KILL bash //use pkill for name based killing of process, use kill for PID based
+
+Ctrl + Z when editing vi
+	: brings the vi process to the background
+	: type "fg" meaning foreground to get back to the background process
+
+ampersand(&) in the end of command will run the command in the background, example use would be backing database which takes too much time
+
+jobs
+	: used to check if we have any programs running in the background
+	: use "fg 1" with job number to bring the program forward, or in foreground
+	: use "bg 1" to resume stopped programs
+
+lsof -p 8401
+	: stands for list open files -p process
+	: run pgrep -a bash //to get PID of the process
+	: then lsof -p 8401
+	: ip permission denied, means the process is owned by another user or by root, use sudo to see
+	: sudo lsof /var/log/messages //check what command is using the file/has used
+
+logging daemon
+	: collect organize and store logs
+
+rsyslog which stands for rocket-fast system for log processing (a logging daemon)
+	: stores all its logs in /var/log
+	: ssh logs are in /var/log/secure
+	: system log files are in /var/log/messages
+
+journalctl
+	: journalctl /bin/bash // show logs made generated this command -- run "which bash" first to get path, press "q" to quit
+	: journalctl -u sshd.service // show logs of a service -- "u" stands for unit
+	: journalctl -p + 2 tabs will show all options // "p" is for priority
+	: journalctl -p info -g '^b' // use grep in journalctl
+	: journalctl -S 02:00 // "S" stands for since, show logs since 2:00
+	: journalctl -S 01:00 -U 02:00
+	: journalctl -S also supports dates with format (2021-11-16 12:04:55) and must be wrapped in single qoutes
+	: journalctl -b 0 // show logs of current boot -- -1 to show logs of previous boot
+	: mkdir /var/log/journal // make the directory to make journal daemon save its journals to disk
+	: using journalctl requires you to login as root or your current user to be in the adm or wheel group
+
+last
+	: command to see who last logged in to the system
+	: newest entry is at the top, not the bottom
+
+lastlog
+	: shows when each user last logged in to the system
+
+TuneD
+	: used on high throughput systems, low latency, and power saving
+	: 2 types.. power saving profile, performance-boosting profile, balanced profile is default
+	steps
+		: sudo yum install tuned -y
+		: sudo systemctl enable --now tuned
+		: systemctl status tuned
+		: (optional) tuned-adm active
+		: (optional) tuned-adm verify
+		: /usr/lib/tuned //location of profiles
+		: main config file is in /etc/tuned/tuned-main.conf
+		: tuned-adm list
+		: tuned-adm profile balanced //to switch profile
+		: tuned-adm profile_info //see profile info
+		: tuned-adm recommend //recommends profile
+		: tuned-adm auto_profile //tuned will auto profile sytem
+		: tuned-adm profile_mode //shows profile selection mode
+		: tuned-adm profile balanced powersave //tuned will merge profiles based on the given options
+		: dynamic tuning config file located at /etc/tuned/tuned-main.conf
+		: restart tuned.service after changing config file
+
+
+To display all available PVs and check which ones are used by LVM, execute:
+
+sudo lvmdiskscan
+
+RAID allows you to combine multiple storage devices into one logical storage unit to either boost capacity or improve data redundancy.
+
+RAID 0 does not provide any redundancy. If any single disk fails, all data in the array is lost.
+
+VFAT file systems are typically created with either a 12-bit or 16-bit file allocation table. To support partitions larger than 2GB, include the -F 32 flag, which creates a 32-bit file system. With a 4096-byte sector size, this configuration can theoretically support partitions up to 16 terabytes.
+
+VDO optimizes storage use through three key techniques: zero-block filtering, deduplication, and compression.
+
+VDO enhances storage performance by filtering out unnecessary data, eliminating redundant blocks, and compressing data in real time.
+
+best practice is to use systemctl reload-or-restart instead or restart or reload
+to completely disable auto starting of service, best practice is to use MASK instead of DISABLE because other programs can still start it
+
+
+add local repo to yum for local enterprise packages
+sudo yum install yum-utils
+sudp yum-config-manager --add-repo https://blabla.repo // or 192.1.1.220/sample.repo
+
+To enable an optional repository, use its repo ID:
+sudo subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
+
+Alternatively, use yum-utils with the yum-config-manager tool:
+sudo yum-config-manager --enable codeready-builder-for-rhel-8-x86_64-rpms
+
+package module streams
+sudo yum module list
+sudo yum module install nodejs:14/development
+sudo yum module list --installed nodejs
+
+
+MANAGE BASIC NETWORKING
+ip l
+ip a
+ip r
+
+firewall-cmd --get-default-zone // default is public
+firewall-cmd --set-default-zone=public
+firewall-cmd --list-all
+firewall-cmd --info-service=cockpit // show info of service
+
+--> 
+	sudo firewall-cmd --add-port=80/tcp
+	sudo firewall-cmd --add-port=80/tcp --permanent // need to run these 2 commands to set permanent, 1st one for assigning, and second 1 for permanent
+-->
+sudo firewall-cmd --add-service=https --permanent // adding https can be done with --add-service or by --add-port=443
+sudo firewall-cmd --remove-port=53/udp
+sudo firewall-cmd --add-source=10.11.12.{0..255}/24 --zone=trusted --permanent
+sudo firewall-cmd --add-source=10.11.12.{0..255}/24 --zone=trusted --permanent
+sudo firewall-cmd --remove-source=10.11.12.0/24 --zone=trusted --permanent
+firewall-cmd --get-active-zones
+
+sudo nmcli connection modify eth1 +ipv4.routes "192.168.0.0/24 172.28.128.100"
+sudo nmcli connection modify eth1 -ipv4.routes "192.168.0.0/24 172.28.128.100"
+sudo nmcli device reapply eth1
+
+chrony
+sudo dnf install chrony -y
+enable --now // chronyd is for time synchronization
+timedactl list-timezones
+timedatectl set-timezone Asia/Manila
+timedatectl get-timezone
+sudo timedatectl show
+sudo timedatectl set-ntp true //timezone synchronization / run if ntp from 'timedatectl' command[only, no args] shows no
+
+// check the service name of the package
+dnf repoquery -l bind | grep systemd
+
+// check if user can use sudo
+sudo -v
+
+AT SCHEDULE
+at 'August 20 2022'
+at '2:30 August 20 2022'
+at 'now + 30 minutes'
+at 'now + 3 hours'
+at 'now + 3 days'
+at 'now + 3 weeks'
+at 'now + 3 months'
+
+at> /usr/bin/touch file_created_by_at // press Ctrl D like cat to save
+atq // see jobs
+at -c 20 //see contents of at job with id 20
+atrm 20 //remove job
+
+CRON
+cat /var/log/cron //logs of cron
+sudo grep [pattern] /var/log/cron
+/etc/crontab // shows details and definitions of asterisks
+
+sudo anacron -n // run anacron jobs 
+sudo grep anacron /var/log/cron
+sudo grep test_job /var/log/cron
+
+
+SELinux Context Label
+user:role:type:level
+
+Kernel runtime parameters
+sudo sysctl -a
+sudo sysctl -w net.ipv6.conf.default.disable_ipv6=1 // change value of parameter (non-persistent)
+sudo sysctl net.ipv6.conf.default.disable_ipv6 // see value
+-- persistent --
+man sysctl.d // will show etc config file and path
+sysctl -a | grep vm
+sudo vi /etc/sysctl.d/swap-less.conf
+--> vm.swapiness=29
+sudo sysctl -p /etc/sysctl.d/swap-less.conf

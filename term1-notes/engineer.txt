@@ -1,0 +1,42 @@
+engineer
+ssh tony@stapp01
+Ir0nM@n
+
+ssh steve@stapp02
+Am3ric@
+
+ssh banner@stapp03
+BigGr33n
+
+ssh loki@stlb01
+Mischi3f
+#HTTP LBR
+
+ssh peter@stdb01
+Sp!dy
+#DB SERVER
+
+ssh natasha@ststor01
+Bl@kW
+#STORAGE SERVER
+
+ssh clint@stbkp01
+H@wk3y3
+#BACKUP SERVER
+
+ssh groot@stmail01
+Gr00T123
+#MAIL SERVER
+
+ssh thor@jump_host
+mjolnir123
+#Jump Server to Access Stork DC
+
+ssh jenkins@jenkins
+j@rv!s
+#Jenkins Server for CI/CD
+
+
+Linux Administration Special Project gmail account
+group3.opswerks@gmail.com
+opswerks3

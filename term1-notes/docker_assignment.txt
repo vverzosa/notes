@@ -1,0 +1,32 @@
+1. 	systemctl status docker
+2. 	docker run hello-world
+	a. no
+	b. docker ps -a
+	c. yes, docker searched locally first, then pulled because it cannot be found locally.. docker images 
+3.	docker run -d --name my_nginx nginx sleep 3600
+4.	docker stop my_nginx; docker rm my_nginx
+5.	docker run -d --name nginx_1 -p 8888:80 nginx
+	curl localhost:8888
+	docker stop nginx_1
+6.	mkdir data
+	echo "Hello World" > data/index.html
+	a. docker run -d --name nginx_2 -p 8888:80 -v /home/adminuser/data:/usr/share/nginx/html nginx
+7.	docker volume create my_volume
+	docker run -d --name nginx3 -p 8888:80 -v my_volume:/usr/share/nginx/html nginx
+
+8.	docker login -u "cybergencent" -p "***" docker.io
+	vi Dockerfile
+	-->
+		FROM nginx:latest
+		COPY index.html /usr/share/nginx/html
+	<--
+	docker build -t my-custom-image .
+	docker tag my-custom-image cybergencent/my-custom-image
+	docker push cybergencent/my-custom-image
+
+9.	docker network create docker_net
+	docker run -d --name nginx_on_net --network docker_net nginx
+	docker network connect docker_net nginx3
+	docker exec -it nginx_on_net apt update
+	docker exec -it nginx_on_net apt install -y wget
+	docker exec -it nginx_on_net wget -O - http://nginx3

@@ -1,0 +1,50 @@
+1. Find files/directories under /var/log/ directory that the group can write to, but others cannot read or write to it. Save the list of the files/directories (with complete parent path) in /home/bob/data.txt file.
+
+You can use the redirection to save your command's output in a file i.e [your-command] > /home/bob/data.txt
+
+
+To make this easier to understand, the logic of the command can be broken down like this:
+
+-> Permissions for the group have to be at least w. If there's also an extra r or x in there, it will still match.
+
+-> Permissions for others have not to be r or w. That means, if any of these two permissions, r or w match for others, the result has to be excluded.
+
+
+ANSWER:
+	sudo find /var/log -perm -g=w -not -perm /o=rw > ~/data.txt
+
+
+
+2. Add the permissions for setuid, setgid and sticky bit on /home/bob/datadir directory.
+
+ANSWER:
+	sudo chmod u+s,g+s,o+t ~/datadir
+
+3. Filter out the lines that contain any word that starts with a capital letter and are then followed by exactly two lowercase letters in /etc/nsswitch.conf file and save the output in /home/bob/filtered1 file.
+
+
+You can use the redirection to save your command's output in a file i.e [your-command] > /home/bob/filtered1
+
+ANSWER:
+	egrep -w '[A-Z][a-z]{2}' /etc/nsswitch.conf > /home/bob/filtered1
+
+
+4. Find all lines in /home/bob/testfile file that contain string man, it must be an exact match.
+
+For example the line like # before /usr/man. or NOCACHE keeps man should match but # given manpath. or For a manpath must not match.
+
+
+Save the filtered lines in /home/bob/man_filtered file.
+
+
+ANSWER:
+	grep -w man testfile > /home/bob/man_filtered
+
+
+5. Save last 500 lines of /home/bob/textfile file in /home/bob/last file.
+
+ANSWER:
+	tail -500  /home/bob/textfile > /home/bob/last
+
+
+6. 

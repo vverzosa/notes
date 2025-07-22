@@ -1,0 +1,88 @@
+homework 3
+1.
+#!/bin/bash
+
+service="$1"
+
+if systemctl is-active -q "$service"; then
+        echo "service is active"
+else
+        echo "service is not active"
+fi
+
+
+2. 
+*/3 * * * * /home/binsoy/check_service_status.sh sshd >> ~/active.log
+
+3.
+update_if_monday.sh <<<
+#!/bin/bash
+if [ "$(date +%u)" -eq 1 ]; then
+  sudo apt update && sudo apt upgrade -y >> /home/binsoy/Update.log
+fi
+
+vi /etc/anacrontab
+1	2	update_on_monday	/etc/cron.daily/update_if_monday.sh
+
+4.
+sudo yum module list
+sudo yum module install mariadb:10.11/server -y
+sudo systemctl enable --now mariadb //optional
+
+5.
+sudo cat /etc/NetworkManager/system-connections/enp0s3.nmconnection
+method=auto // DHCP is used
+
+ps aux | grep dhclient
+
+
+6.
+sudo ss -tulnp | grep mariadb
+
+7.
+sudo vi /etc/hosts
+11.11.11.11		batch8.com
+ping batch8.com
+
+8.
+timedatectl list-timezones | grep Manila
+sudo timedatectl set-timezone Asia/Manila
+
+9.
+useradd -D > ~/user-default.txt
+
+10.
+sudo groupadd Batch8
+sudo useradd Wafu -G Batch8
+sudo passwd Wafu
+
+grep Wafu /etc/passwd
+cat /etc/group
+
+11.
+sudo chage -M 30 -W 7 Wafu
+sudo chage -l Wafu
+
+12.
+sudo usermod -L Wafu
+sudo passwd -S Wafu // check if locked
+
+13.
+sudo groupadd developers
+sudo groupadd reviewers
+sudo usermod -g developers -aG reviewers Wafu
+id Wafu
+
+14.
+sudo vi /etc/ssh/sshd_config
+PasswordAuthentication no
+PubkeyAuthentication yes
+
+Match User Wafu
+    PasswordAuthentication yes
+
+sudo systemctl restart sshd
+ssh Wafu@localhost
+
+15.
+podman create --name my-alpine alpine:latest

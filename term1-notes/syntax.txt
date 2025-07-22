@@ -1,0 +1,78 @@
+Bash Array Syntax
+
+Syntax	Purpose
+"${array[@]}"		All values in the array (preserves word splitting)
+"${array[*]}"		All values as a single word (joined by IFS)
+"${!array[@]}"		All indexes (keys) in the array
+"${#array[@]}"		Number of elements in the array
+"${#array[i]}"		Length of element at index i
+"${array[i]}"		Element at index i
+array=(val1 val2)	Define an array
+array[0]=val1		Assign value to specific index
+unset array[i]		Remove element at index i
+unset array			Delete entire array
+
+
+Variable Expansion & Indirection
+
+Syntax	Purpose
+$var or ${var}		Value of the variable var
+${!var}				Indirect expansion: value of the variable whose name is in var
+${#var}				Length (number of characters) of value of var
+${var:-default}		Use default if var is unset or empty
+${var:=default}		Assign default to var if unset or empty
+${var:+alt}			Use alt if var is set (non-null)
+${var:?message}		Print message and exit if var is unset or empty
+
+
+
+String Manipulation
+
+Syntax	Purpose
+${var#pattern}					Remove shortest match of pattern from the start
+${var##pattern}					Remove longest match of pattern from the start
+${var%pattern}					Remove shortest match of pattern from the end
+${var%%pattern}					Remove longest match of pattern from the end
+${var/pattern/replacement}		Replace first match of pattern
+${var//pattern/replacement}		Replace all matches
+${var:offset}					Substring from offset
+${var:offset:length}			Substring from offset of given length
+
+
+
+Arithmetic & Conditionals
+
+Syntax	Purpose
+$((expression))			Arithmetic evaluation
+((expression))			Arithmetic test, like in if or while
+let "x=5+3"				Another way to evaluate arithmetic
+[[ condition ]]			Advanced conditional expression (string/file tests)
+[ condition ]			Traditional test command (less powerful)
+
+
+
+Loops & Control (Bonus)
+
+
+Syntax	Purpose
+for i in ...; do ...; done			Loop over a list
+for ((i=0; i<n; i++))				C-style loop
+while condition; do ...; done		Loop while condition is true
+break and continue					Control loop flow
+
+
+Bash Arguments Cheatsheet
+
+Symbol	Description
+$0			Name of the script
+$1, $2, …	First, second, etc. argument passed to the script
+$#			Number of arguments passed to the script
+$@			All arguments, each as a separate word (respects quoting)
+$*			All arguments, as a single string (depends on IFS for separation)
+"$@"		All args, quoted and preserved individually → "arg1" "arg2" …
+"$*"		All args, quoted as one single string → "arg1 arg2 ..."
+shift		Moves all arguments one position left ($2 becomes $1, etc.)
+"$?"		Exit status of the last command
+"$!"		PID of the last backgrounded process
+
+

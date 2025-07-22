@@ -1,0 +1,14 @@
+questions
+1. How do you execute a command stored in a variable in BASH?
+	eval
+
+2. how do you capture multi-line user input into a variable in BASH?
+
+	read -r -d '' user_input << EOF
+	$(cat) # This captures all lines typed by the user until Ctrl+D
+	EOF
+
+3. what is the best way to handle errors in a series of piped commands in bash
+	set -o
+
+4. 

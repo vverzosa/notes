@@ -1,0 +1,295 @@
+#5
+sudo useradd vince
+sudo usermod --expiredate '2024-12-23' vince
+
+#6
+find /home/usersdata -type f -user kirsty -exec cp --parents {} /media \;
+
+#7 
+disable ssh root login
+edit /etc/ssh/sshd_config
+PermitRootLogin no
+restart sshd
+
+#9
+initial file perm is 0
+task is to add execute perm to all users
++x didn't work, needs r perm also because need to read perm first before execute
+
+#12
+scp /tmp/nautilus.txt.gpg steve@172.16.238.11:/home/web
+
+#13 task is to allow crontab access to ravi, deny to eric
+create /etc/cron.allow and add ravi there
+create cron.deny and add eric
+sudo systemctl restart crond.service
+
+#16 
+need to reload firewall-cmd in order to reflect changes
+sudo firewall-cmd --add-port=6000/tcp --zone=public --permanent
+sudo firewall-cmd --reload
+
+#17 
+set the maximum and minimum process limits
+sudo vi /etc/security/limits.conf
+@nfsuser	soft	nproc	1024
+@nfsuser	hard	nproc	2027
+
+#18 
+/** NEED TO REVIEW SELINUX https://notes.kodekloud.com/docs/Red-Hat-Certified-System-AdministratorRHCSA/Manage-Security/List-and-Identify-SELinux-file-and-process-contexts **/
+The xFusionCorp Industries security team recently did a security audit of their infrastructure and came up with ideas to improve the application and server security. They decided to use SElinux for an additional security layer. They are still planning how they will implement it; however, they have decided to start testing with app servers, so based on the recommendations they have the following requirements:
+
+Install the required packages of SElinux on App server 3 in Stratos Datacenter and disable it permanently for now; it will be enabled after making some required configuration changes on this host. Don't worry about rebooting the server as there is already a reboot scheduled for tonight's maintenance window. Also ignore the status of SElinux command line right now; the final status after reboot should be disabled.
+
+Solution:
+
+SSH to server
+sudo yum install selinux* -y
+Edit /etc/selinux/config file, change:
+SELINUX=disabled
+
+
+KKE 2
+#4 
+There is some data on Nautilus App Server 2 in Stratos DC. Data needs to be altered in several of the files. On Nautilus App Server 2, alter the /home/BSD.txt file as per details given below:
+a. Delete all lines containing word code and save results in /home/BSD_DELETE.txt file. (Please be aware of case sensitivity)
+b. Replace all occurrence of word and to them and save results in /home/BSD_REPLACE.txt file.
+Note: Let's say you are asked to replace word to with from. In that case, make sure not to alter any words containing the string itself; for example upto, contributor etc.
+
+Solution:
+sed '/code/d' /home/BSD.txt > /home/BSD_DELETE.txt
+sed 's/and/them/g' /home/BSD.txt > /home/BSD_REPLACE.txt
+
+#2
+During the monthly compliance meeting, it was pointed out that several servers in the Stratos DC do not have a valid banner. The security team has provided serveral approved templates which should be applied to the servers to maintain compliance. These will be displayed to the user upon a successful login.
+Update the message of the day on all application and db servers for Nautilus. Make use of the approved template located at /home/thor/nautilus_banner on jump host
+
+Solution: 
+1 - Copy banner file to all servers:
+sudo scp /home/thor/nautilus_banner peter@stdb01:/home/peter
+2 - SSH to the server and edit the config file:
+sudo vi /etc/ssh/sshd_config
+3 - Uncomment the "Banner" and add the path
+4 - sudo systemctl restart sshd
+
+#6
+During a routine security audit, the team identified an issue on the Nautilus App Server. Some malicious content was identified within the website code.
+After digging into the issue they found that there might be more infected files. Before doing a cleanup they would like to find all similar files and copy them to a safe location for further investigation.
+Accomplish the task as per the following requirements:
+a. On App Server 3 at location /var/www/html/news find out all files (not directories) having .php extension.
+b. Copy all those files along with their parent directory structure to location /news on same server.
+c. Please make sure not to copy the entire /var/www/html/news directory content.
+
+Solution:
+ssh banner@stapp03
+find /var/www/html/news -type f -iname "*.php" -exec cp --parents {} /news/ \;
+
+#8
+sudo dnf update -y
+sudo pip3 install ansible==4.10.0
+
+#9
+sudo su
+touch /etc/yum.repos.d/epel_local.repo // then vi
+
+[epel_local]
+name=epel_local
+baseurl=file:///packages/downloaded_rpms/
+gpgcheck=0 // 0 for local or not available
+enabled=1
+#gpgkey= //use only if gpgcheck is 1 and have link for the key
+
+createrepo -v /packages/downloaded_rpms/
+yum repolist
+yum install --disablerepo="*" --enablerepo="epel_local" samba // install samba using local repo only
+
+#11
+need to add user to wheel group instead of creating user entry in sudoers
+
+#
+sudo dnf install firewalld -y
+sudo systemctl enable --now firewalld
+sudo firewall-cmd --add-port=80/tcp --zone=public --permanent
+sudo firewall-cmd --remove-port=8080/tcp --zone=public --permanent
+systemctl status nginx
+systemctl status httpd
+
+
+#
+xFusionCorp Industries has planned to set up a common email server in Stork DC.
+After several meetings and recommendations they have decided to use postfix as their mail transfer agent and dovecot as an IMAP/POP3 server. We would like you to perform the following steps:
+
+Install and configure postfix on Stork DC mail server.
+Create an email account kirsty@stratos.xfusioncorp.com identified by ksH85UJjhb.
+Set its mail directory to /home/kirsty/Maildir.
+Install and configure dovecot on the same server.
+Solution:
+
+ssh groot@stmail01
+sudo su
+yum install postfix -y
+Uncomment/Edit/Add below configuration on /etc/postfix/main.conf:
+
+myhostname = stmail01.stratos.xfusioncorp.com	
+mydomain = stratos.xfusioncorp.com	
+myorigin = $mydomain
+inet_interfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = 172.16.238.0/24, 127.0.0.0/8
+home_mailbox = Maildir/
+# inet_interfaces = localhost
+systemctl start postfix
+systemctl status postfix
+useradd kirsty
+passwd kirsty
+
+yum install dovecot -y
+Uncomment/Edit/Add below configuration on /etc/dovecot/dovecot.conf:
+
+protocols = imap pop3 
+Uncomment/Edit/Add below configuration on /etc/dovecot/conf.d/10-mail.conf:
+
+mail_location = maildir:~/Maildir
+Uncomment/Edit/Add below configuration on /etc/dovecot/conf.d/10-auth.conf:
+
+disable_plaintext_auth = yes
+auth_mechanisms = plain login
+Uncomment/Edit/Add below configuration on /etc/dovecot/conf.d/10-master.conf:
+
+
+  unix_listener auth-userdb {
+    mode = 0660
+    user = postfix
+    group = postfix
+  }
+systecmtl start dovecot
+systemctl status dovecot
+
+ssh groot@stmail01
+
+sudo yum install postfix -y
+
+sudo vi /etc/postfix/main.cf
+-->
+    myhostname = stmail01.stratos.xfusioncorp.com 
+    mydomain = stratos.xfusioncorp.com  
+    myorigin = $mydomain
+    inet_interfaces = all
+    # inet_interfaces = localhost
+    mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+    mynetworks = 172.16.238.0/24, 127.0.0.0/8
+    home_mailbox = Maildir/
+<--
+
+sudo enable --now postfix
+
+sudo useradd user
+sudo passwd user
+
+#
+There is a critical issue going on with the Nautilus application in Stratos DC. The production support team identified that the application is unable to connect to the database.
+After digging into the issue, the team found that mariadb service is down on the database server.
+Look into the issue and fix the same.
+
+Solution:
+
+ssh peter@stdb01
+sudo systemctl start mariadb
+Above "start" command will result in error.
+
+sudo cat /var/log/mariadb/mariadb.log
+And you will see the error logs:
+
+4-10-28 16:08:12 0 [ERROR] InnoDB: The error means mysqld does not have the access rights to the directory.
+2024-10-28 16:08:12 0 [ERROR] InnoDB: Operating system error number 13 in a file operation.
+2024-10-28 16:08:12 0 [ERROR] InnoDB: The error means mysqld does not have the access rights to the directory.
+which suggests that there's permission errors:
+
+sudo chown mysql:mysql /var/lib/mysql
+sudo chown mysql:mysql /var/run/mariadb
+sudo start systemctl mariadb
+
+
+#19
+task is to archive and copy archive to backup server without asking password
+
+ssh banner@stapp03
+ssh-keygen
+ssh-copy-id clint@stbkp01
+cd /scripts/
+vi blog_backup.sh:
+add below lines to a script:
+
+#!/bin/bash
+zip -r /backup/xfusioncorp_blog.zip /var/www/html/blog
+scp -r /backup/xfusioncorp_blog.zip clint@stbkp01:/backup/
+
+#20
+We are working on hardening Apache web server on all app servers. As a part of this process we want to add some of the Apache response headers for security purpose.
+We are testing the settings one by one on all app servers. As per details mentioned below enable these headers for Apache:
+
+Install httpd package on App Server 1 using yum and configure it to run on 5000 port, make sure to start its service.
+Create an index.html file under Apache's default document root i.e /var/www/html and add below given content in it.
+Welcome to the xFusionCorp Industries!
+Configure Apache to enable below mentioned headers:
+X-XSS-Protection header with value 1; mode=block
+X-Frame-Options header with value SAMEORIGIN
+X-Content-Type-Options header with value nosniff
+Note: You can test using curl on the given app server as LBR URL will not work for this task.
+
+Solution:
+
+ssh tony@stapp01
+sudo yum intall httpd -y
+sudo sed -i 's/^Listen 80/Listen 5000/' /etc/httpd/conf/httpd.conf
+echo "Welcome to the xFusionCorp Industries!" > /var/www/html/index.html
+sudo chown apache.apache /var/www/html/index.html
+sudo vi /etc/httpd/conf/httpd.conf
+add below to configuration file:
+
+<IfModule mod_headers.c>
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
+
+sudo systemctl start httpd
+sudo systemctl enable httpd
+sudo systemctl status httpd
+test headers:
+
+curl -I http://localhost:5000
+
+
+#22
+We have confidential data that needs to be transferred to a remote location, so we need to encrypt that data.We also need to decrypt data we received from a remote location in order to understand its content.
+On storage server in Stratos Datacenter we have private and public keys stored at /home/*_key.asc. Use these keys to perform the following actions.
+
+Encrypt /home/encrypt_me.txt to /home/encrypted_me.asc.
+Decrypt /home/decrypt_me.asc to /home/decrypted_me.txt. (Passphrase for decryption and encryption is kodekloud).
+The user ID you can use is kodekloud@kodekloud.com.
+Solution:
+
+ssh natasha@ststor01
+sudo su
+gpg --import /home/public_key.asc
+gpg --import /home/private_key.asc
+Encryption:
+
+gpg --output /home/encrypted_me.asc --encrypt --recipient kodekloud@kodekloud.com /home/encrypt_me.txt
+Decryption:
+
+gpg --output /home/decrypted_me.txt --decrypt /home/decrypt_me.asc
+
+
+#23
+sudo dnf install tomcat -y
+sudo systemctl enable --now tomcat
+sudo cp /etc/logrotate.d/tomcat.disabled /etc/logrotate.d/tomcat
+sudo vi /etc/logrotate.d/tomcat
+logrotate -d /etc/logrotate.d/tomcat
+
+#24
+sudo iptables -I INPUT -p tcp --dport 8094 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 3002 -j DROP
+iptables-save > /etc/sysconfig/iptables
