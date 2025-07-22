@@ -81,7 +81,14 @@ service types
 	LoadBalancer
 		- Provisions a load balancer (in supported cloud environments) for distribution.
 etcd 	- listens on port 2379 by default
-
+node affinity
+		- ensure that pods are hosted on particular nodes
+		types: available
+			- requiredDuringSchedulingIgnoredDuringExecution
+			- preferredDuringSchedulingIgnoredDuringExecution
+		types: planned 	// will be availablel on future releases
+			- requiredDuringSchedulingRequiredDuringExecution
+			- preferredDuringSchedulingRequiredDuringExecution
 
 
 
@@ -177,6 +184,25 @@ kubectl set image deployment nginx nginx=nginx:1.18
 kubectl create -f nginx.yaml
 kubectl replace -f nginx.yaml
 kubectl delete -f nginx.yaml
+
+
+# Get pods by using selector
+kubectl get pods --selector app=App1
+
+
+-- TAINTS AND TOLERATIONS --
+taints are set for nodes
+tolerations are set for pods
+
+
+kubectl taint nodes node1 app=blue:NoSchedule 	// 3 taint-effects : NoSchedule, PreferNoSchedule, NoExecution
+kubectl describe node kubemaster | grep Taint 	// see taints set on kubemaster
+kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule- 		// add "-" at the end to remove taint
+
+-- NODE SELECTORS --
+kubectl label nodes node-1 size=Large 	// label a node
+nexxt is creating a pod with node selector option --> refer to pod-with-node-selector.yaml file	
+
 
 
 OCI		- Open Container Initiative
