@@ -82,6 +82,7 @@ service types
 		- Provisions a load balancer (in supported cloud environments) for distribution.
 etcd 	- listens on port 2379 by default
 node affinity
+		- first step is to label the nodes
 		- ensure that pods are hosted on particular nodes
 		types: available
 			- requiredDuringSchedulingIgnoredDuringExecution
@@ -89,6 +90,13 @@ node affinity
 		types: planned 	// will be availablel on future releases
 			- requiredDuringSchedulingRequiredDuringExecution
 			- preferredDuringSchedulingRequiredDuringExecution
+DaemonSet
+		- ensures that one copy of a pod is always present in all nodes in the cluster
+		- yaml structure is identical to ReplicaSet, just change kind to DaemonSet
+Static pod
+		- create a pod definition file in /etc/kubernetes/manifests
+		- will be automatically created by kubelet, just run get pods
+
 
 
 
@@ -194,15 +202,58 @@ kubectl get pods --selector app=App1
 taints are set for nodes
 tolerations are set for pods
 
-
 kubectl taint nodes node1 app=blue:NoSchedule 	// 3 taint-effects : NoSchedule, PreferNoSchedule, NoExecution
 kubectl describe node kubemaster | grep Taint 	// see taints set on kubemaster
 kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule- 		// add "-" at the end to remove taint
 
 -- NODE SELECTORS --
 kubectl label nodes node-1 size=Large 	// label a node
-nexxt is creating a pod with node selector option --> refer to pod-with-node-selector.yaml file	
+nexxt is creating a pod with node selector option --> refer to pod-with-node-selector.yaml file
 
+-- LOGGING MONITORING --
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml 	// Deploy the Metrics Server in Kubernetes cluster
+kubectl top node
+kubectl top pod
+
+# Managing Application Logs
+docker run -d kodekloud/event-simulator
+docker logs -f <container_id>
+
+kubectl create -f event-simulator.yaml
+kubectl logs -f event-simulator-pod
+
+kubectl logs -f event-simulator-pod event-simulator 	// logging a multi container pod, must indicate name of pod then container name
+
+-- CONFIG MAPS --
+# Creating config map imperative way
+kubectl create configmap app-config --from-literal=APP_COLOR=blue --from-literal=APP_MOD=prod
+kubectl create configmap app-config --from-file=app_config.properties
+
+kubectl get configmaps
+kubectl describe configmaps
+
+# 3 ways to inject config map
+
+envFrom:
+  - configMapRef:
+      name: app-config 	// pod will get all default envs from configmap file
+
+
+env:
+  - name: APP_COLOR		// inject a single env
+    valueFrom:
+      configMapKeyRef:
+        name: app-config
+        key: APP_COLOR
+
+
+volumes:
+  - name: app-config-volume 	//mount the entire configmap as a volume
+    configMap:
+      name: app-config
+
+-- SECRETS --
+kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123 	// imperative way | auto encodes base64
 
 
 OCI		- Open Container Initiative
@@ -223,4 +274,38 @@ Then, create a service of type ClusterIP with the same name (httpd) that exposes
 A: kubectl run httpd --image=httpd:alpine --port=80 --expose
 -- long version --
    kubectl run httpd --image=httpd:alpine
-   kubectl expose --name=httpd pod httpd --port=80
+   kubectl expose --name=httpd pod httpd --port=
+
+Q: The elephant pod runs a process that consumes 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
+Delete and recreate the pod if required. Do not modify anything other than the required fields.
+A: kubectl get po elephant -o yaml > elephant.yaml
+	kubectl replace -f elephant.yaml --force
+
+Q: We just created a new static pod named static-greenbox. Find it and delete it.
+A: ssh node01
+	ps -ef |  grep /usr/bin/kubelet 
+	grep -i staticpod /var/lib/kubelet/config.yaml
+	--> staticPodPath: /etc/just-to-mess-with-you
+	rm -rf /etc/just-to-mess-with-you/greenbox.yaml
+
+
+Q: Update the environment variable on the POD to use only the APP_COLOR key from the newly created ConfigMap.
+A:
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: webapp-color
+  name: webapp-color
+  namespace: default
+spec:
+  containers:
+  - env:
+    - name: APP_COLOR
+      valueFrom:
+       configMapKeyRef:
+         name: webapp-config-map
+         key: APP_COLOR
+    image: kodekloud/webapp-color
+    name: webapp-color
