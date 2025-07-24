@@ -1,0 +1,73 @@
+Q: Edit the app pod in the elastic-stack namespace to add a sidecar container named sidecar to send logs to Elastic Search. Mount the log volume to the sidecar container at path /var/log/event-simulator/.
+Only update the pod to include the new container. Do not modify anything else. You might need to delete and re-create the app pod. Refer to the diagram below for your configuration.
+A:
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: app
+  name: app
+  namespace: elastic-stack
+spec:
+  initContainers:
+  - name: sidecar
+    image: kodekloud/filebeat-configured
+    restartPolicy: Always
+    volumeMounts:
+      - name: log-volume
+        mountPath: /var/log/event-simulator
+
+  containers:
+  - image: kodekloud/event-simulator
+    name: app
+    resources: {}
+    volumeMounts:
+    - mountPath: /log
+      name: log-volume
+
+  volumes:
+  - hostPath:
+      path: /var/log/webapp
+      type: DirectoryOrCreate
+    name: log-volume
+
+Q: Create a pod named httpd using the image httpd:alpine in the default namespace.
+Then, create a service of type ClusterIP with the same name (httpd) that exposes the pod on port 80.
+A: kubectl run httpd --image=httpd:alpine --port=80 --expose
+-- long version --
+   kubectl run httpd --image=httpd:alpine
+   kubectl expose --name=httpd pod httpd --port=
+
+Q: The elephant pod runs a process that consumes 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
+Delete and recreate the pod if required. Do not modify anything other than the required fields.
+A: kubectl get po elephant -o yaml > elephant.yaml
+	kubectl replace -f elephant.yaml --force
+
+Q: We just created a new static pod named static-greenbox. Find it and delete it.
+A: ssh node01
+	ps -ef |  grep /usr/bin/kubelet 
+	grep -i staticpod /var/lib/kubelet/config.yaml
+	--> staticPodPath: /etc/just-to-mess-with-you
+	rm -rf /etc/just-to-mess-with-you/greenbox.yaml
+
+
+Q: Update the environment variable on the POD to use only the APP_COLOR key from the newly created ConfigMap.
+A:
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: webapp-color
+  name: webapp-color
+  namespace: default
+spec:
+  containers:
+  - env:
+    - name: APP_COLOR
+      valueFrom:
+       configMapKeyRef:
+         name: webapp-config-map
+         key: APP_COLOR
+    image: kodekloud/webapp-color
+    name: webapp-color
