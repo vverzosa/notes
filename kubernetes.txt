@@ -255,6 +255,41 @@ volumes:
 -- SECRETS --
 kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123 	// imperative way | auto encodes base64
 
+-- MULTI CONTAINER --
+kubectl -n elastic-stack exec -it app -- cat /log/app.log 	// check logs of app in specific namespace | "--" indicator that the next item is a command, not a flag
+
+-- OS UPGRADES --
+kubectl drain node-1
+kubectl cordon node-1
+kubectl uncordon node-1
+
+-- CLUSTER UPGRADE --
+kube-apiserver v1.10
+Controller-manager and kube-scheduler = X-1 or same	// in version
+kube-proxy and kubelet = X-2 or same
+kubectl = X+1 or X-1 or same
+
+kubernetes supports only the 3 latest updated versions
+recommended way to upgrade from v.10 to v.12 is v.10 -> v.11 -> v.12, not shortcut to v.12 from v.10
+
+# On master node
+kubeadm upgrade plan
+apt-get upgrade -y kubeadm=1.12.0-00 	// upgrade kubeadm itself
+kubeadm upgrade apply v1.12.0 	//upgrades the kubernetes components
+
+# On worker nodes
+kubectl drain node01
+apt-get upgrade -y kubeadm=1.12.0-00
+apt-get upgrade -y kubelet=1.12.0-00
+kubeadm upgrade node config --kubelet-version v.1.12.0
+systemctl restart kubelet
+kubectl uncordon node01
+
+--> FOR UPGRADING, REFER TO KUBERNETES DOCS <--
+https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+https://kubernetes.io/blog/2023/08/15/pkgs-k8s-io-introduction/
+
+
 
 OCI		- Open Container Initiative
 CRI		- Container Runtime Interface -- consists of
@@ -267,45 +302,3 @@ ETCD
 		- ./etcdctl put key1 value
 		- ./etcdctl get key1
 		- ./ectdctl
-
-
-Q: Create a pod named httpd using the image httpd:alpine in the default namespace.
-Then, create a service of type ClusterIP with the same name (httpd) that exposes the pod on port 80.
-A: kubectl run httpd --image=httpd:alpine --port=80 --expose
--- long version --
-   kubectl run httpd --image=httpd:alpine
-   kubectl expose --name=httpd pod httpd --port=
-
-Q: The elephant pod runs a process that consumes 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
-Delete and recreate the pod if required. Do not modify anything other than the required fields.
-A: kubectl get po elephant -o yaml > elephant.yaml
-	kubectl replace -f elephant.yaml --force
-
-Q: We just created a new static pod named static-greenbox. Find it and delete it.
-A: ssh node01
-	ps -ef |  grep /usr/bin/kubelet 
-	grep -i staticpod /var/lib/kubelet/config.yaml
-	--> staticPodPath: /etc/just-to-mess-with-you
-	rm -rf /etc/just-to-mess-with-you/greenbox.yaml
-
-
-Q: Update the environment variable on the POD to use only the APP_COLOR key from the newly created ConfigMap.
-A:
----
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    name: webapp-color
-  name: webapp-color
-  namespace: default
-spec:
-  containers:
-  - env:
-    - name: APP_COLOR
-      valueFrom:
-       configMapKeyRef:
-         name: webapp-config-map
-         key: APP_COLOR
-    image: kodekloud/webapp-color
-    name: webapp-color
