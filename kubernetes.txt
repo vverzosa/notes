@@ -289,6 +289,12 @@ kubectl uncordon node01
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 https://kubernetes.io/blog/2023/08/15/pkgs-k8s-io-introduction/
 
+-- PERSISTENT VOLUME --
+kubectl apply -f pv.yaml
+kubectl get persistentvolume
+
+Administrator creates pv while users create the pvc
+
 
 
 OCI		- Open Container Initiative
