@@ -295,6 +295,40 @@ kubectl get persistentvolume
 
 Administrator creates pv while users create the pvc
 
+-- CNI --
+# CNI config files location/s
+/opt/cni/bin
+/etc/cni/net.d
+
+-- SERVICE NETWORKING --
+A pod is hosted on a node while a service is hosted across the cluster
+
+-- kube-proxy --
+# Proxy modes
+userspace, iptables(default), ipvs
+cat /var/log/kube-proxy.log
+
+# Service ClusterIP default range
+10.0.0.0/24
+kube-apiserver --service-cluster-ip-range ipNet
+cat /etc/kubernetes/manifests/kube-apiserver.yaml   | grep cluster-ip-range
+ps aux | grep kube-apiserver
+iptables -L -t nat | grep db-service
+
+-- CoreDNS --
+cat /etc/coredns/Corefile
+
+# Passed to the pod as a ConfigMap
+kubectl get configmap -n kube-system
+DNS is done automatically by kubelet when the pods are created
+
+# Get IP of service
+host <service-name>
+
+
+
+
+
 
 
 OCI		- Open Container Initiative
