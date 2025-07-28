@@ -101,3 +101,92 @@ spec:
       path: /var/log/webapp
       # this field is optional
       type: Directory
+
+
+Q:  Inspect the kubelet service and identify the container runtime endpoint value is set for Kubernetes.
+A:  Run the command: ps -aux | grep kubelet | grep --color container-runtime-endpoint and look at the configured --container-runtime-endpoint flag.
+
+
+Q:  What binary executable file will be run by kubelet after a container and its associated namespaces are created?
+A:  cat /etc/cni/net.d/10-flannel.conflist    // look for "type"
+
+
+Q:  What is the range of IP addresses configured for PODs on this cluster?
+A:  cat /etc/kubernetes/manifests/kube-controller-manager.yaml   | grep cluster-cidr
+
+
+Q:  What is the IP Range configured for the services within the cluster?
+A:  cat /etc/kubernetes/manifests/kube-apiserver.yaml   | grep cluster-ip-range
+
+
+Q:  What type of proxy is the kube-proxy configured to use?
+A:  kubectl get pods -A | grep kube-proxy
+    kubectl logs -n kube-system kube-proxy-25thf
+
+
+Q:  How does this Kubernetes cluster ensure that a kube-proxy pod runs on all nodes in the cluster?
+A:  kubectl get ds -n kube-system     //daemonsets
+
+
+Q:  Identify the DNS solution implemented in this cluster.
+A:  kubectl get pods -n kube-system
+
+
+Q:  What is the name of the service created for accessing CoreDNS?
+A:  kubectl get service -n kube-system
+
+
+Q:  What is the IP of the CoreDNS server that should be configured on PODs to resolve services?
+A:  kubectl get service -n kube-system
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
