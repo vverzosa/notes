@@ -355,17 +355,54 @@ ssh node01 "service kubelet start"
 -- ETCD backup and restore --
 kubectl get pods -n kube-system | grep etcd
 
-kubectl -n kube-system exec etcd-<controlplane-name> -- \
+kubectl -n kube-system exec etcd-vverzosa-a2t-pe-kub1-2a -- \
   etcdctl snapshot save /tmp/etcd.db \
   --cacert=/etc/kubernetes/pki/etcd/ca.crt \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key 					// check first if crt and key paths are correct --> cat /etc/kubernetes/manifests/etcd.yaml
 
-kubectl -n kube-system exec etcd-<controlplane-name> -- etcdctl snapshot status /tmp/etcd.db 	// check if db file is present in tmp dir
 
-kubectl -n kube-system exec etcd-<controlplane-name> -- \
+
+ETCDCTL_API=3 etcdctl snapshot save snapshot.db \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key 
+
+kubectl -n kube-system exec etcd-vverzosa-a2t-pe-kub1-2a -- etcdctl snapshot status /tmp/etcd.db 	// check if db file is present in tmp dir
+
+kubectl -n kube-system exec etcd-vverzosa-a2t-pe-kub1-2a  -- \
   etcdctl snapshot restore /tmp/etcd.db \
-  --data-dir=/var/lib/etcd
+  --data-dir=/var/lib/etcd-from-backup
 
 
 https://kubernetes.github.io/ingress-nginx/deploy/
+
+
+
+
+
+
+-- AFTER KUBEADM INSTALLATION --
+IP_ADDR=$(ip addr show eth0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+kubeadm init --apiserver-cert-extra-sans=controlplane --apiserver-advertise-address $IP_ADDR --pod-network-cidr=172.17.0.0/16 --service-cidr=172.20.0.0/16
+
+
+mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+-- FLANNEL SETUP ON CPLANE --
+curl -LO https://raw.githubusercontent.com/flannel-io/flannel/v0.20.2/Documentation/kube-flannel.yml
+
+
+
+
+
+
+
+
+
+
+
+
