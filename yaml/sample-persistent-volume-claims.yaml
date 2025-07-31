@@ -8,3 +8,19 @@ spec:
   resources:
     requests:
       storage: 500Mi
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+spec:
+  containers:
+  - name: app
+    image: nginx
+    volumeMounts:
+    - mountPath: /data
+      name: myvolume
+  volumes:
+  - name: myvolume
+    persistentVolumeClaim:
+      claimName: myclaim

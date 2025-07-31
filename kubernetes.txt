@@ -289,6 +289,9 @@ kubectl uncordon node01
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 https://kubernetes.io/blog/2023/08/15/pkgs-k8s-io-introduction/
 https://kubernetes.io/docs/reference/kubectl/quick-reference/
+grep baseurl /etc/yum.repos.d/kubernetes.repo
+grep -r kubernetes /etc/apt/sources.list /etc/apt/sources.list.d/
+
 
 -- PERSISTENT VOLUME --
 kubectl apply -f pv.yaml
@@ -358,8 +361,11 @@ kubectl -n kube-system exec etcd-<controlplane-name> -- \
   --cert=/etc/kubernetes/pki/etcd/server.crt \
   --key=/etc/kubernetes/pki/etcd/server.key 					// check first if crt and key paths are correct --> cat /etc/kubernetes/manifests/etcd.yaml
 
-kubectl -n kube-system exec etcd-<controlplane-name> -- ls /tmp/etcd.db 	// check if db file is present in tmp dir
+kubectl -n kube-system exec etcd-<controlplane-name> -- etcdctl snapshot status /tmp/etcd.db 	// check if db file is present in tmp dir
 
 kubectl -n kube-system exec etcd-<controlplane-name> -- \
   etcdctl snapshot restore /tmp/etcd.db \
   --data-dir=/var/lib/etcd
+
+
+https://kubernetes.github.io/ingress-nginx/deploy/
