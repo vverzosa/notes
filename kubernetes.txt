@@ -288,6 +288,51 @@ kubectl uncordon node01
 --> FOR UPGRADING, REFER TO KUBERNETES DOCS <--
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 https://kubernetes.io/blog/2023/08/15/pkgs-k8s-io-introduction/
+https://kubernetes.io/docs/reference/kubectl/quick-reference/
+grep baseurl /etc/yum.repos.d/kubernetes.repo
+grep -r kubernetes /etc/apt/sources.list /etc/apt/sources.list.d/
+
+
+-- PERSISTENT VOLUME --
+kubectl apply -f pv.yaml
+kubectl get persistentvolume
+
+Administrator creates pv while users create the pvc
+kubectl get pvc 	// check if pvc is bound
+
+-- CNI --
+# CNI config files location/s
+/opt/cni/bin
+/etc/cni/net.d
+
+-- SERVICE NETWORKING --
+A pod is hosted on a node while a service is hosted across the cluster
+
+-- kube-proxy --
+# Proxy modes
+userspace, iptables(default), ipvs
+cat /var/log/kube-proxy.log
+
+# Service ClusterIP default range
+10.0.0.0/24
+kube-apiserver --service-cluster-ip-range ipNet
+cat /etc/kubernetes/manifests/kube-apiserver.yaml   | grep cluster-ip-range
+ps aux | grep kube-apiserver
+iptables -L -t nat | grep db-service
+
+-- CoreDNS --
+cat /etc/coredns/Corefile
+
+# Passed to the pod as a ConfigMap
+kubectl get configmap -n kube-system
+DNS is done automatically by kubelet when the pods are created
+
+# Get IP of service
+host <service-name>
+
+
+
+
 
 
 
@@ -302,3 +347,25 @@ ETCD
 		- ./etcdctl put key1 value
 		- ./etcdctl get key1
 		- ./ectdctl
+
+
+
+ssh node01 "service kubelet start"
+
+-- ETCD backup and restore --
+kubectl get pods -n kube-system | grep etcd
+
+kubectl -n kube-system exec etcd-<controlplane-name> -- \
+  etcdctl snapshot save /tmp/etcd.db \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key 					// check first if crt and key paths are correct --> cat /etc/kubernetes/manifests/etcd.yaml
+
+kubectl -n kube-system exec etcd-<controlplane-name> -- etcdctl snapshot status /tmp/etcd.db 	// check if db file is present in tmp dir
+
+kubectl -n kube-system exec etcd-<controlplane-name> -- \
+  etcdctl snapshot restore /tmp/etcd.db \
+  --data-dir=/var/lib/etcd
+
+
+https://kubernetes.github.io/ingress-nginx/deploy/

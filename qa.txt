@@ -71,3 +71,356 @@ spec:
          key: APP_COLOR
     image: kodekloud/webapp-color
     name: webapp-color
+
+
+Q: Configure a volume to store these logs at /var/log/webapp on the host.
+Name: webapp
+Image Name: kodekloud/event-simulator
+Volume HostPath: /var/log/webapp
+Volume Mount: /log
+A:
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webapp
+spec:
+  containers:
+  - name: event-simulator
+    image: kodekloud/event-simulator
+    env:
+    - name: LOG_HANDLERS
+      value: file
+    volumeMounts:
+    - mountPath: /log
+      name: log-volume
+
+  volumes:
+  - name: log-volume
+    hostPath:
+      # directory location on host
+      path: /var/log/webapp
+      # this field is optional
+      type: Directory
+
+
+Q:  Inspect the kubelet service and identify the container runtime endpoint value is set for Kubernetes.
+A:  Run the command: ps -aux | grep kubelet | grep --color container-runtime-endpoint and look at the configured --container-runtime-endpoint flag.
+
+
+Q:  What binary executable file will be run by kubelet after a container and its associated namespaces are created?
+A:  cat /etc/cni/net.d/10-flannel.conflist    // look for "type"
+
+
+Q:  What is the range of IP addresses configured for PODs on this cluster?
+A:  cat /etc/kubernetes/manifests/kube-controller-manager.yaml   | grep cluster-cidr
+
+
+Q:  What is the IP Range configured for the services within the cluster?
+A:  cat /etc/kubernetes/manifests/kube-apiserver.yaml   | grep cluster-ip-range
+
+
+Q:  What type of proxy is the kube-proxy configured to use?
+A:  kubectl get pods -A | grep kube-proxy
+    kubectl logs -n kube-system kube-proxy-25thf
+
+
+Q:  How does this Kubernetes cluster ensure that a kube-proxy pod runs on all nodes in the cluster?
+A:  kubectl get ds -n kube-system     //daemonsets
+
+
+Q:  Identify the DNS solution implemented in this cluster.
+A:  kubectl get pods -n kube-system
+
+
+Q:  What is the name of the service created for accessing CoreDNS?
+A:  kubectl get service -n kube-system
+
+
+Q:  What is the IP of the CoreDNS server that should be configured on PODs to resolve services?
+A:  kubectl get service -n kube-system
+
+
+Q:  Share volume KKE
+A:  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: volume-share-xfusion
+spec:
+  volumes:
+    - name: volume-share
+      emptyDir: {}
+
+  containers:
+    - name: volume-container-xfusion-1
+      image: ubuntu:latest
+      command: ["/bin/bash", "-c", "sleep 10000"]
+      volumeMounts:
+        - name: volume-share
+          mountPath: /tmp/blog
+
+    - name: volume-container-xfusion-2
+      image: ubuntu:latest
+      command: ["/bin/bash", "-c", "sleep 10000"]
+      volumeMounts:
+        - name: volume-share
+          mountPath: /tmp/games
+
+
+Q:  Shared-logs KKE
+A:  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver
+spec:
+  volumes:
+    - name: shared-logs
+      emptyDir: {}
+
+  containers:
+    - name: nginx-container
+      image: nginx:latest
+      volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+
+    - name: sidecar-container
+      image: ubuntu:latest
+      command: ["sh","-c","while true; do cat /var/log/nginx/access.log /var/log/nginx/error.log; sleep 30; done"]
+      volumeMounts:
+        - name: shared-logs
+          mountPath: /var/log/nginx
+
+
+
+Q:  1.) Create a deployment using nginx image with latest tag only and remember to mention tag i.e nginx:latest and name it as nginx-deployment. App labels should be app: nginx-app and type: front-end. The container should be named as nginx-container; also make sure replica counts are 3.
+    2.) Also create a service named nginx-service and type NodePort. The targetPort should be 80 and nodePort should be 30011.
+
+A:
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-app
+    type: front-end
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+      type: front-end
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+        type: front-end
+    spec:
+      containers:
+      - name: nginx-container
+        image: nginx:latest
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+  labels:
+     app: nginx-app
+     type: front-end
+spec:
+  type: NodePort
+  selector:
+     app: nginx-app
+     type: front-end
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30011
+
+
+Q:  print envs
+A:  
+apiVersion: v1
+kind: Pod
+metadata:
+  name: print-envars-greeting
+spec:
+  containers:
+  - name: print-env-container
+    image: bash
+    env:
+    - name: GREETING
+      value: "Welcome to"
+    - name: COMPANY
+      value: "Nautilus"
+    - name: GROUP
+      value: "Industries"
+    command: ["echo"]
+    args: ["$(GREETING) $(COMPANY) $(GROUP)"]
+    restartPolicy: Never
+
+
+Q:  Create a namespace nautilus. Create a deployment called httpd-deploy under this new namespace, It should have one container called httpd, use httpd:2.4.27 image and 2 replicas. The deployment should use RollingUpdate strategy with maxSurge=1, and maxUnavailable=2. Also create a NodePort type service named httpd-service and expose the deployment on nodePort: 30008. Now upgrade the deployment to version httpd:2.4.43 using a rolling update.
+Finally, once all pods are updated undo the recent update and roll back to the previous/original version.
+
+A:  
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd-deploy
+  namespace: nautilus
+  labels:
+    app: httpd
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 2
+  replicas: 2
+  selector:
+    matchLabels:
+      app: httpd
+  template:
+    metadata:
+      labels:
+        app: httpd
+    spec:
+      containers:
+      - name: httpd
+        image: httpd:2.4.27
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: httpd-service
+  namespace: nautilus
+  labels:
+     app: httpd
+spec:
+  type: NodePort
+  selector:
+     app: httpd
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30008
+
+
+kubectl set image deployment httpd-deploy -n nautilus httpd=httpd:2.4.43 --record
+rollout undo
+
+
+Q:  Deploy jenkins
+A:  
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jenkins
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-service
+  namespace: jenkins
+spec:
+  type: NodePort
+  selector:
+    app: jenkins
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30008
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-deployment
+  namespace: jenkins
+  labels:
+    app: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+      - name: jenkins-container
+        image: jenkins/jenkins
+        ports:
+        - containerPort: 8080
+
+
+Q:  Deploy tomcat
+A:  
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tomcat-deployment-devops
+  namespace: tomcat-namespace-devops
+  labels:
+    app: tomcat-deployment-devops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tomcat-deployment-devops
+  template:
+    metadata:
+      labels:
+        app: tomcat-deployment-devops
+    spec:
+      containers:
+      - name: tomcat-container-devops
+        image: gcr.io/kodekloud/centos-ssh-enabled:tomcat
+        ports:
+        - containerPort: 8080
+        
+---        
+apiVersion: v1
+kind: Service
+metadata:
+  name: tomcat-service-devops
+  namespace: tomcat-namespace-devops
+spec:
+  type: NodePort
+  selector:
+    app: tomcat-deployment-devops
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 8080
+      nodePort: 32227
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
+
+
+Q:  
+A:  
