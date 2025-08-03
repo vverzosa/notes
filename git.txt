@@ -1,0 +1,20 @@
+-- INSTALL MAN PAGE --
+sudo apt-get install git-man
+
+3d4ec2ac448bcfc8114a7f1918a598ca7ba08364
+
+git remote add origin
+git fetch
+git merge origin/master
+
+git stash
+git stash pop stash@{2}
+git stash list
+git stash show stash@{2}
+
+git hash-object first_story.txt
+ls ./.git/objects 		// lists 2 character-named dirs (first 2 chars of the hash) then inside is the remaining 3rd...last char
+git cat-file -p bea8d7
+
+-- GIT OBJECT CONTENT TYPES --
+commit, tree, blob
