@@ -1,0 +1,40 @@
+https://www.jenkins.io/doc/book/installing/linux/#red-hat-centos
+
+-- INSTALL JENKINS (COURSE VERSION) --
+sudo yum install epel-release -y
+sudo yum install fontconfig java-17-openjdk -y
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo --no-check-certificate
+sudo rpm --import http://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+sudo yum install jenkins -y
+
+sudo vi /lib/systemd/system/jenkins.service
+Environment="JENKINS_PORT=8090"
+sudo systemctl start jenkins
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+-- JENKINS CLI --
+Login -> Manage Jenkins -> Tools and actions -> Jenkins CLI
+
+java -jar jenkins-cli.jar -s http://20.127.124.114:8080/ -webSocket help
+
+wget http://20.127.124.114:8080/jnlpJars/jenkins-cli.jar
+ls
+
+# Authenticating jenkins
+Log in to your Jenkins portal.
+Click on your username and select Configure.
+Scroll down to API Tokens.
+If you do not have an API token, click Add New Token to generate one
+
+java -jar jenkins-cli.jar -s http://20.127.124.114:8080/ -auth mike:11f2ac3217dc7c01abe3a9d3c4bababe5d
+mike@jenkinshost01:~$ java -jar jenkins-cli.jar -s http://20.127.124.114:8080/ -auth mike:11f2ac3217dc7c01abe3a9d3c4bababe5d -webSocket list-jobs
+
+# After creating sample pipeline
+java -jar jenkins-cli.jar -s http://20.127.124.114:8080/ -auth mike:11f2ac3217dc7c01abe3a9d3c4bababe5d -webSocket list-jobs
+java -jar jenkins-cli.jar -s http://20.127.124.114:8080/ -auth mike:11f2ac3217dc7c01abe3a9d3c4bababe5d -webSocket build test2
+
+java -jar jenkins-cli.jar -s http://localhost:8085 -auth 'admin:Adm!n321' install-plugin cloudbees-bitbucket-branch-source
+
+# After adding SSH key to jenkins
+ssh -i /home/mike/.ssh/jenkins_key -l mike -p 8022 jenkins-server help
